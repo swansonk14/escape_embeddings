@@ -1,0 +1,21 @@
+name: escape_embeddings
+
+channels:
+  - conda-forge
+  - pytorch
+
+dependencies:
+  - python>=3.10
+  - ipdb
+  - ipython
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - pytorch
+  - scikit-learn
+  - scipy
+  - tqdm
+  - pip:
+    - fair-esm
+    - typed-argument-parser
