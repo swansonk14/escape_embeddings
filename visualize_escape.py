@@ -138,16 +138,16 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame,
     plt.savefig(save_path)
 
 
-def visualize_escape(data_path: Path, antibodies_path: Path, save_dir: Path) -> None:
+def visualize_escape(data_path: Path, antibody_path: Path, save_dir: Path) -> None:
     """Visualize antibody escape in response to SARS-CoV-2 RBD mutations.
 
     :param data_path: Path to CSV file containing mutation data.
-    :param antibodies_path: Path to CSV file containing antibody data.
+    :param antibody_path: Path to CSV file containing antibody data.
     :param save_dir: Path to directory where plots will be saved.
     """
     # Load data
     data = pd.read_csv(data_path)
-    antibody_data = pd.read_csv(antibodies_path)
+    antibody_data = pd.read_csv(antibody_path)
 
     # Handle outliers
     data.loc[data[ESCAPE_COLUMN] > 1, ESCAPE_COLUMN] = 1.0
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     class Args(Tap):
         data_path: Path
         """Path to CSV file containing mutation data."""
-        antibodies_path: Path
+        antibody_path: Path
         """Path to CSV file containing antibody data."""
         save_dir: Path
         """Path to directory where plots will be saved."""

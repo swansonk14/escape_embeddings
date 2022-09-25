@@ -1,5 +1,9 @@
 """Contains constants used in the Python files in this repo."""
 AA_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
+HEAVY_CHAIN = 'heavy'
+LIGHT_CHAIN = 'light'
+ANTIBODY_CHAINS = [HEAVY_CHAIN, LIGHT_CHAIN]
+PROTEIN_LINKER = 'GGS' * 7  # Linker amino acids for combining multiple proteins into a single sequence
 
 # Constants for data from Cao et al. https://www.nature.com/articles/s41586-021-04385-3
 ANTIBODY_COLUMN = 'condition'
@@ -43,6 +47,8 @@ RBD_SITE_TO_AA = {
     531: 'T'
 }
 RBD_SITES = sorted(RBD_SITE_TO_AA)
+RBD_START_SITE = RBD_SITES[0]  # inclusive
+RBD_END_SITE = RBD_SITES[-1]  # inclusive
 RBD_SEQUENCE = ''.join(RBD_SITE_TO_AA[site] for site in RBD_SITES)
 
 # ESM is from https://github.com/facebookresearch/esm

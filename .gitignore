@@ -137,3 +137,6 @@ dmypy.json
 # Directories
 data
 plots
+models
+embeddings
+preds
