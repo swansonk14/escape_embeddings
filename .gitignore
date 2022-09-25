@@ -133,3 +133,7 @@ dmypy.json
 
 # Mac
 .DS_Store
+
+# Directories
+data
+plots
