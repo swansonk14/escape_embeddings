@@ -1,5 +1,6 @@
 """Contains constants used in the Python files in this repo."""
 AA_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
+AA_ALPHABET_SET = set(AA_ALPHABET)
 HEAVY_CHAIN = 'heavy'
 LIGHT_CHAIN = 'light'
 ANTIBODY_CHAINS = [HEAVY_CHAIN, LIGHT_CHAIN]

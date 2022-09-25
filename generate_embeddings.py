@@ -1,11 +1,11 @@
-"""Generate protein embeddings using the ESM2 model from https://github.com/facebookresearch/esm."""
+"""Generate antigen/antibody embeddings using the ESM2 model from https://github.com/facebookresearch/esm."""
 from time import time
 from pathlib import Path
 from typing import Literal, Optional
 
 import pandas as pd
 import torch
-from esm import BatchConverter, ESM2
+from esm import Alphabet, BatchConverter, ESM2
 from tap import Tap
 
 from constants import (
@@ -61,7 +61,7 @@ def get_antibody_sequences(antibody_path: Path) -> dict[str, dict[str, str]]:
     return antibody_sequences
 
 
-def load_esm_model(hub_dir: str, esm_model: str) -> tuple[ESM2, BatchConverter]:
+def load_esm_model(hub_dir: str, esm_model: str) -> tuple[ESM2, Alphabet, BatchConverter]:
     """Load an ESM2 model and batch converter.
 
     :param hub_dir: Path to directory where torch hub models are saved.
@@ -73,7 +73,7 @@ def load_esm_model(hub_dir: str, esm_model: str) -> tuple[ESM2, BatchConverter]:
     batch_converter = alphabet.get_batch_converter()
     model.eval()
 
-    return model, batch_converter
+    return model, alphabet, batch_converter
 
 
 def generate_esm_embeddings(model: ESM2,
@@ -120,7 +120,7 @@ def generate_embeddings(hub_dir: str,
                         embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
                         save_path: Path,
                         antibody_path: Optional[Path] = None) -> None:
-    """Generate protein embeddings using the ESM2 model from https://github.com/facebookresearch/esm.
+    """Generate antigen/antibody embeddings using the ESM2 model from https://github.com/facebookresearch/esm.
 
     :param hub_dir: Path to directory where torch hub models are saved.
     :param esm_model: Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm.
@@ -168,7 +168,7 @@ def generate_embeddings(hub_dir: str,
     print(f'Number of {embedding_type} sequences = {len(sequences):,}')
 
     # Load ESM-2 model
-    model, batch_converter = load_esm_model(hub_dir=hub_dir, esm_model=esm_model)
+    model, alphabet, batch_converter = load_esm_model(hub_dir=hub_dir, esm_model=esm_model)
 
     # Generate embeddings
     sequence_representations = generate_esm_embeddings(

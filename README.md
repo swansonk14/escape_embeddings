@@ -50,28 +50,33 @@ python visualize_escape.py \
 ```
 
 
-## Generate ESM2 Embeddings
+## ESM2 Protein Language Model
 
-Generate antibody and antigen embeddings with an ESM2 model. See ESM2 model options at https://github.com/facebookresearch/esm.
+Use an ESM2 protein language model to embed antigens and antibodies and to compute mutant likelihood ratios. See ESM2 model options at https://github.com/facebookresearch/esm.
+
+
+### Generate ESM2 Embeddings
+
+Generate antibody and antigen embeddings with an ESM2 model.
 
 Antigen embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
-    --esm_model esm2_t6_8M_UR50D \
-    --last_layer 6 \
+    --esm_model esm2_t48_15B_UR50D \
+    --last_layer 48 \
     --embedding_type antigen \
-    --save_path embeddings/antigen_name_to_embedding.pt
+    --save_path embeddings/antigen_embeddings.pt
 ```
 
 Antibody embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
-    --esm_model esm2_t6_8M_UR50D \
-    --last_layer 6 \
+    --esm_model esm2_t48_15B_UR50D \
+    --last_layer 48 \
     --embedding_type antibody \
-    --save_path embeddings/antibody_name_to_embedding.pt \
+    --save_path embeddings/antibody_embeddings.pt \
     --antibody_path data/antibodies.csv
 ```
 
@@ -79,9 +84,21 @@ Antigen embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
-    --esm_model esm2_t6_8M_UR50D \
-    --last_layer 6 \
+    --esm_model esm2_t48_15B_UR50D \
+    --last_layer 48 \
     --embedding_type antibody-antigen \
-    --save_path embeddings/antibody_antigen_name_to_embedding.pt \
+    --save_path embeddings/antibody_antigen_embeddings.pt \
     --antibody_path data/antibodies.csv
+```
+
+
+### Generate ESM2 Likelihood Ratios
+
+Generate mutant vs wildtype antigen likelihood ratios with an ESM2 model.
+
+```bash
+python generate_likelihood_ratios.py \
+    --hub_dir models \
+    --esm_model esm2_t48_15B_UR50D \
+    --save_path embeddings/antigen_likelihood_ratios.pt
 ```
