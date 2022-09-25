@@ -12,7 +12,6 @@ from constants import (
     AA_ALPHABET,
     ANTIBODY_CHAINS,
     ANTIBODY_NAME_COLUMN,
-    ESM_LAST_LAYER,
     HEAVY_CHAIN,
     HEAVY_CHAIN_COLUMN,
     LIGHT_CHAIN,
@@ -78,11 +77,13 @@ def load_esm_model(hub_dir: str, esm_model: str) -> tuple[ESM2, BatchConverter]:
 
 
 def generate_esm_embeddings(model: ESM2,
+                            last_layer: int,
                             batch_converter: BatchConverter,
                             sequences: list[tuple[str, str]]) -> dict[str, torch.FloatTensor]:
     """Generate embeddings using an ESM2 model from https://github.com/facebookresearch/esm.
 
     :param model: A pretrained ESM2 model.
+    :param last_layer: Last layer of the ESM2 model, which will be used to extract embeddings.
     :param batch_converter: A BatchConverter for preparing protein sequences as input.
     :param sequences: A list of tuples of (name, sequence) for the proteins.
     :return: A dictionary mapping protein name to per-residue ESM2 embedding.
@@ -90,18 +91,16 @@ def generate_esm_embeddings(model: ESM2,
     # Prepare data
     batch_labels, batch_strs, batch_tokens = batch_converter(sequences)
 
-    # Compute embeddings (on CPU)
+    # Compute embeddings
     start = time()
 
     with torch.no_grad():
-        results = model(batch_tokens, repr_layers=[ESM_LAST_LAYER], return_contacts=False)
+        results = model(batch_tokens, repr_layers=[last_layer], return_contacts=False)
 
     print(f'Time = {time() - start} seconds for {len(sequences):,} sequences')
 
     # Get per-residue embeddings
-    # TODO: last layer
-    breakpoint()
-    embeddings = results['representations'][ESM_LAST_LAYER]
+    embeddings = results['representations'][last_layer]
 
     # Map sequence name to embedding
     # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
@@ -117,6 +116,7 @@ def generate_esm_embeddings(model: ESM2,
 
 def generate_embeddings(hub_dir: str,
                         esm_model: str,
+                        last_layer: int,
                         embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
                         save_path: Path,
                         antibody_path: Optional[Path] = None) -> None:
@@ -124,6 +124,7 @@ def generate_embeddings(hub_dir: str,
 
     :param hub_dir: Path to directory where torch hub models are saved.
     :param esm_model: Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm.
+    :param last_layer: Last layer of the ESM2 model, which will be used to extract embeddings.
     :param embedding_type: Type of embedding to compute. When using antibody embeddings, must provide antibody_path.
     :param save_path: Path to PT file where a dictionary mapping protein name to embeddings will be saved.
     :param antibody_path: Path to a file containing antibody sequences.
@@ -165,7 +166,6 @@ def generate_embeddings(hub_dir: str,
 
     # Print stats
     print(f'Number of {embedding_type} sequences = {len(sequences):,}')
-    breakpoint()
 
     # Load ESM-2 model
     model, batch_converter = load_esm_model(hub_dir=hub_dir, esm_model=esm_model)
@@ -173,6 +173,7 @@ def generate_embeddings(hub_dir: str,
     # Generate embeddings
     sequence_representations = generate_esm_embeddings(
         model=model,
+        last_layer=last_layer,
         batch_converter=batch_converter,
         sequences=sequences
     )
@@ -188,6 +189,8 @@ if __name__ == '__main__':
         """Path to directory where torch hub models are saved."""
         esm_model: str
         """Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm."""
+        last_layer: int
+        """Last layer of the ESM2 model, which will be used to extract embeddings."""
         embedding_type: Literal['antigen', 'antibody', 'antibody-antigen']
         """Type of embedding to compute. When using antibody embeddings, must provide antibody_path."""
         save_path: Path

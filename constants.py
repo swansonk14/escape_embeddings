@@ -50,6 +50,3 @@ RBD_SITES = sorted(RBD_SITE_TO_AA)
 RBD_START_SITE = RBD_SITES[0]  # inclusive
 RBD_END_SITE = RBD_SITES[-1]  # inclusive
 RBD_SEQUENCE = ''.join(RBD_SITE_TO_AA[site] for site in RBD_SITES)
-
-# ESM is from https://github.com/facebookresearch/esm
-ESM_LAST_LAYER = 33

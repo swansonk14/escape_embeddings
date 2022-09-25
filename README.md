@@ -59,6 +59,7 @@ Antigen embeddings
 python generate_embeddings.py \
     --hub_dir models \
     --esm_model esm2_t6_8M_UR50D \
+    --last_layer 6 \
     --embedding_type antigen \
     --save_path embeddings/antigen_name_to_embedding.pt
 ```
@@ -68,6 +69,7 @@ Antibody embeddings
 python generate_embeddings.py \
     --hub_dir models \
     --esm_model esm2_t6_8M_UR50D \
+    --last_layer 6 \
     --embedding_type antibody \
     --save_path embeddings/antibody_name_to_embedding.pt \
     --antibody_path data/antibodies.csv
@@ -78,6 +80,7 @@ Antigen embeddings
 python generate_embeddings.py \
     --hub_dir models \
     --esm_model esm2_t6_8M_UR50D \
+    --last_layer 6 \
     --embedding_type antibody-antigen \
     --save_path embeddings/antibody_antigen_name_to_embedding.pt \
     --antibody_path data/antibodies.csv
