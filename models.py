@@ -1,5 +1,6 @@
 """Model classes for predicting escape scores."""
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -72,6 +73,10 @@ class EscapeModel(ABC):
         """
         pass
 
+    def __str__(self) -> str:
+        """Return a string representation of the model."""
+        return self.__class__.__name__
+
 
 class MutationModel(EscapeModel):
     """A model that predicts the average escape score of each wildtype-mutant amino acid substitution."""
@@ -133,10 +138,6 @@ class MutationModel(EscapeModel):
             for wildtype, mutant in zip(wildtypes, mutants)
         ])
 
-    def __str__(self) -> str:
-        """Return a string representation of the model."""
-        return self.__class__.__name__
-
 
 class SiteModel(EscapeModel):
     """A model that predicts the average escape score at each antigen site."""
@@ -192,10 +193,6 @@ class SiteModel(EscapeModel):
         """
         return np.array([self.site_to_average_escape.get(site, 0.0) for site in sites])
 
-    def __str__(self) -> str:
-        """Return a string representation of the model."""
-        return self.__class__.__name__
-
 
 class LikelihoodModel(EscapeModel):
     """A model that predicts escape scores by using antigen mutant vs wildtype likelihood."""
@@ -241,10 +238,6 @@ class LikelihoodModel(EscapeModel):
         :return: A numpy array of predicted escape scores.
         """
         return np.array([self.antigen_likelihoods[f'{site}_{mutant}'] for site, mutant in zip(sites, mutants)])
-
-    def __str__(self) -> str:
-        """Return a string representation of the model."""
-        return self.__class__.__name__
 
 
 class MutationDataset(Dataset):
@@ -586,7 +579,6 @@ class EmbeddingModel(EscapeModel):
             dataset=dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=0,  # TODO: enable parallel workers
             collate_fn=self.collate_embeddings_and_escape
         )
 
@@ -631,7 +623,6 @@ class EmbeddingModel(EscapeModel):
             dataset=dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=0,  # TODO: enable parallel workers
             collate_fn=self.collate_embeddings_and_escape
         )
 

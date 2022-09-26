@@ -117,13 +117,12 @@ def train_and_eval_escape(
         split_seed: int = 0,
         model_seed: int = 0,
         verbose: bool = True
-) -> tuple[dict[str, Optional[float]], EscapeModel]:
+) -> dict[str, Optional[float]]:
     """Train and evaluate a model on predicting escape.
 
-    :return: A tuple containing the results (dict mapping metric name to value) and trained model.
+    TODO: params docstring
+    :return: A results dictionary mapping metric to value.
     """
-    # TODO: params docstring
-
     if verbose:
         print(f'Data size = {len(data):,}')
 
@@ -208,7 +207,7 @@ def train_and_eval_escape(
         for metric, value in results.items():
             print(f'Test {metric} = {value:.3f}')
 
-    return results, model
+    return results
 
 
 def predict_escape(
@@ -303,12 +302,12 @@ def predict_escape(
 
     # Train and evaluate escape depending on model granularity
     if model_granularity == 'per-antibody':
-        all_results, all_models = [], []
+        all_results = []
         antibodies = sorted(data[ANTIBODY_COLUMN].unique())
 
         for antibody in tqdm(antibodies, desc='Antibodies'):
             antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
-            results, model = train_and_eval_escape(
+            results = train_and_eval_escape(
                 data=antibody_data,
                 model_type=model_type,
                 task_type=task_type,
@@ -330,7 +329,6 @@ def predict_escape(
                 verbose=True  # TODO: change to False
             )
             all_results.append(results)
-            all_models.append(model)
 
             # Create antibody save dir
             antibody_save_dir = save_dir / antibody
@@ -339,9 +337,6 @@ def predict_escape(
             # Save results
             with open(antibody_save_dir / 'results.json', 'w') as f:
                 json.dump(results, f, indent=4, sort_keys=True)
-
-            # Save model
-            torch.save(model, antibody_save_dir / 'model.pt')
 
         # Compute summary results
         metrics = all_results[0].keys()
@@ -368,7 +363,7 @@ def predict_escape(
             json.dump(summary_results, f, indent=4, sort_keys=True)
 
     elif model_granularity == 'cross-antibody':
-        results, model = train_and_eval_escape(
+        results = train_and_eval_escape(
             data=data,
             model_type=model_type,
             task_type=task_type,
@@ -393,9 +388,6 @@ def predict_escape(
         # Save results
         with open(save_dir / 'results.json', 'w') as f:
             json.dump(results, f, indent=4, sort_keys=True)
-
-        # Save model
-        torch.save(model, save_dir / 'model.pt')
     else:
         raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
 
