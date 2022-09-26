@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import Literal, Optional
 
+import pandas as pd
 from tap import Tap
 
 
@@ -9,6 +10,7 @@ def predict_escape(
         data_path: Path,
         save_dir: Path,
         model_type: Literal['baseline_mutation', 'baseline_site', 'likelihood', 'embedding'],
+        model_granularity: Literal['per-antibody', 'cross-antibody'],
         task_type: Literal['classification', 'regression'],
         split_type: Literal['mutation', 'site', 'antibody', 'antibody_group'],
         antibody_path: Optional[Path] = None,
@@ -21,11 +23,15 @@ def predict_escape(
         use_antibody_embeddings: bool = False,
         antibody_embeddings_path: Optional[Path] = None,
         antibody_embedding_method: Optional[Literal['concatenation', 'attention']] = None,
-        seed: int = 0,
+        split_seed: int = 0,
+        model_seed: int = 0,
         verbose: bool = False
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
     # Validate arguments
+    if model_granularity == 'per-antibody':
+        assert split_type not in {'antibody', 'antibody_group'}
+
     if split_type == 'antibody_group':
         assert antibody_path is not None and antibody_group_method is not None
     else:
@@ -48,6 +54,8 @@ def predict_escape(
     else:
         assert antibody_embeddings_path is None and antibody_embedding_method is None
 
+    # Load data
+    data = pd.read_csv(data_path)
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -59,6 +67,8 @@ if __name__ == '__main__':
         """Path to CSV file containing antibody escape data."""
         save_dir: Path
         """Path to directory where results and models will be saved."""
+        model_granularity: Literal['per-antibody', 'cross-antibody']
+        """The granularity of the model, either one model per antibody or one model across all antibodies."""
         model_type: Literal['baseline_mutation', 'baseline_site', 'likelihood', 'embedding']
         """The type of model to train."""
         task_type: Literal['classification', 'regression']
