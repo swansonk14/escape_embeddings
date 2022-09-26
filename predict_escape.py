@@ -111,7 +111,7 @@ def train_and_eval_escape(
         split_seed: int = 0,
         model_seed: int = 0,
         verbose: bool = True
-) -> tuple[dict[str, float], EscapeModel]:
+) -> tuple[dict[str, Optional[float]], EscapeModel]:
     """Train and evaluate a model on predicting escape.
 
     :return: A tuple containing the results (dict mapping metric name to value) and trained model.
@@ -184,12 +184,13 @@ def train_and_eval_escape(
     # Binarize test escape scores
     test_escape = test_data[ESCAPE_COLUMN]
     binary_test_escape = (test_escape > 0).astype(int)
+    unique_binary_labels = set(binary_test_escape)
 
     # Evaluate predictions
     # TODO: average by antibody or across mutations?
     results = {
-        'ROC-AUC': roc_auc_score(binary_test_escape, test_preds),
-        'PRC-AUC': average_precision_score(binary_test_escape, test_preds),
+        'ROC-AUC': roc_auc_score(binary_test_escape, test_preds) if len(unique_binary_labels) > 1 else float('nan'),
+        'PRC-AUC': average_precision_score(binary_test_escape, test_preds) if len(unique_binary_labels) > 1 else float('nan'),
         'MSE': mean_squared_error(test_escape, test_preds),
         'R2': r2_score(test_escape, test_preds)
     }
@@ -328,20 +329,22 @@ def predict_escape(
         }
         summary_results = {
             metric: {
-                'mean': np.mean(all_results[metric]),
-                'std': np.std(all_results[metric])
+                'mean': float(np.nanmean(all_results[metric])),
+                'std': float(np.nanstd(all_results[metric])),
+                'num': len(all_results[metric]),
+                'num_nan': int(np.isnan(all_results[metric]).sum())
             }
             for metric in metrics
         }
 
         for metric, values in summary_results.items():
-            print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f}')
+            print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f} ' +
+                  (f'({values["num_nan"]:,} / {values["num"]:,} NaN)' if values["num_nan"] > 0 else ''))
 
         # Save summary results
         with open(save_dir / 'summary_results.json', 'w') as f:
             json.dump(summary_results, f, indent=4, sort_keys=True)
 
-        # TODO: do something with results and models
     elif model_granularity == 'cross-antibody':
         results, model = train_and_eval_escape(
             data=data,
@@ -368,7 +371,6 @@ def predict_escape(
 
         # Save model
         torch.save(model, save_dir / 'model.pt')
-        # TODO: do something with results and model
     else:
         raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
 

@@ -1,6 +1,5 @@
 """Model classes for predicting escape scores."""
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import Iterable, Optional
 
 import numpy as np
@@ -75,8 +74,8 @@ class MutationModel(EscapeModel):
         """
         super(MutationModel, self).__init__(task_type=task_type)
 
-        self.wildtype_to_mutant_to_escape_list = defaultdict(lambda: defaultdict(list))
-        self.wildtype_to_mutant_to_average_escape = defaultdict(lambda: defaultdict(float))
+        self.wildtype_to_mutant_to_escape_list = {}
+        self.wildtype_to_mutant_to_average_escape = None
 
     def fit(self,
             antibodies: Iterable[str],
@@ -94,11 +93,16 @@ class MutationModel(EscapeModel):
         :return: The fitted model.
         """
         for wildtype, mutant, escape in zip(wildtypes, mutants, escapes):
-            self.wildtype_to_mutant_to_escape_list[wildtype][mutant].append(int(escape > 0) if self.binarize else escape)
+            escape = int(escape > 0) if self.binarize else escape
+            self.wildtype_to_mutant_to_escape_list.setdefault(wildtype, {}).setdefault(mutant, []).append(escape)
 
-        for wildtype, mutant_to_escape_list in self.wildtype_to_mutant_to_escape_list.items():
-            for mutant, escape_list in mutant_to_escape_list.items():
-                self.wildtype_to_mutant_to_average_escape[wildtype][mutant] = sum(escape_list) / len(escape_list)
+        self.wildtype_to_mutant_to_average_escape = {
+            wildtype: {
+                mutant: sum(escape_list) / len(escape_list)
+                for mutant, escape_list in mutant_to_escape_list.items()
+            }
+            for wildtype, mutant_to_escape_list in self.wildtype_to_mutant_to_escape_list.items()
+        }
 
         return self
 
@@ -116,7 +120,7 @@ class MutationModel(EscapeModel):
         :return: A numpy array containing average escape scores for each wildtype-mutation amino acid substitution.
         """
         return np.array([
-            self.wildtype_to_mutant_to_average_escape[wildtype][mutant]
+            self.wildtype_to_mutant_to_average_escape.get(wildtype, {}).get(mutant, 0.0)
             for wildtype, mutant in zip(wildtypes, mutants)
         ])
 
@@ -131,8 +135,8 @@ class SiteModel(EscapeModel):
         """
         super(SiteModel, self).__init__(task_type=task_type)
 
-        self.site_to_escape_list = defaultdict(list)
-        self.site_to_average_escape = defaultdict(float)
+        self.site_to_escape_list = {}
+        self.site_to_average_escape = None
 
     def fit(self,
             antibodies: Iterable[str],
@@ -150,10 +154,13 @@ class SiteModel(EscapeModel):
         :return: The fitted model.
         """
         for site, escape in zip(sites, escapes):
-            self.site_to_escape_list[site].append(int(escape > 0) if self.binarize else escape)
+            escape = int(escape > 0) if self.binarize else escape
+            self.site_to_escape_list.setdefault(site, []).append(escape)
 
-        for site, escape_list in self.site_to_escape_list.items():
-            self.site_to_average_escape[site] = sum(escape_list) / len(escape_list)
+        self.site_to_average_escape = {
+            site: sum(escape_list) / len(escape_list)
+            for site, escape_list in self.site_to_escape_list.items()
+        }
 
         return self
 
@@ -170,7 +177,7 @@ class SiteModel(EscapeModel):
         :param mutants: A list of mutant amino acids at each site.
         :return: A numpy array containing average escape scores for each antigen site.
         """
-        return np.array([self.site_to_average_escape[site] for site in sites])
+        return np.array([self.site_to_average_escape.get(site, 0.0) for site in sites])
 
 
 class LikelihoodModel(EscapeModel):
