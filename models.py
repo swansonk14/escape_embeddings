@@ -4,6 +4,7 @@ from typing import Iterable, Optional
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
@@ -226,7 +227,7 @@ class LikelihoodModel(EscapeModel):
         return np.array([self.antigen_likelihoods[f'{site}_{mutant}'] for site, mutant in zip(sites, mutants)])
 
 
-class EmbeddingModel(EscapeModel):
+class EmbeddingModel(EscapeModel, nn.Module):
     """A model that predicts escape scores by using antibody/antigen embeddings."""
 
     def __init__(self,
@@ -244,12 +245,63 @@ class EmbeddingModel(EscapeModel):
         """
         super(EmbeddingModel, self).__init__(task_type=task_type)
 
+        assert (antibody_embeddings is None) == (antibody_embedding_type is None)
+
         self.embedding_granularity = embedding_granularity
         self.antigen_embeddings = antigen_embeddings
         self.antigen_embedding_type = antigen_embedding_type
         self.antibody_embeddings = antibody_embeddings
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_sizes = hidden_layer_sizes
+
+        # Get embedding dimensionalities
+        self.antigen_embedding_dim = next(iter(self.antigen_embeddings.values())).shape[-1]
+
+        if self.antibody_embeddings is not None:
+            self.antibody_embedding_dim = next(iter(self.antibody_embeddings.values())).shape[-1]
+
+            # TODO: this might not be necessary and/or could use alternate dimensionality for attention
+            if self.antibody_embedding_dim == 'attention':
+                assert self.antigen_embedding_dim == self.antibody_embedding_dim
+        else:
+            self.antibody_embedding_dim = None
+
+        # Compute average sequence embeddings
+        if self.embedding_granularity == 'sequence':
+            self.antigen_embeddings = {
+                name: embedding.mean(dim=0)
+                for name, embedding in self.antigen_embeddings.items()
+            }
+
+            if self.antibody_embeddings is not None:
+                self.antibody_embeddings = {
+                    name: embedding.mean(dim=0)
+                    for name, embedding in self.antibody_embeddings.items()
+                }
+
+        # Set up layer dimensionalities
+        if self.antibody_embeddings is not None and self.antibody_embedding_type == 'concatenation':
+            self.input_dim = self.antigen_embedding_dim + self.antibody_embedding_dim
+        else:
+            self.input_dim = self.antigen_embedding_dim
+
+        self.output_dim = 1
+        self.layer_dims = [self.input_dim] + list(hidden_layer_sizes) + [self.output_dim]
+
+        # Create layers
+        self.layers = nn.ModuleList([
+            nn.Linear(self.layer_dims[i], self.layer_dims[i + 1])
+            for i in range(len(self.layers) - 1)
+        ])
+
+        # Create activation function
+        self.activation = nn.ReLU()
+
+        # Create output function
+        if self.binarize:
+            self.output_function = nn.Sigmoid()
+        else:
+            self.output_function = None
 
         # TODO: create model and handle embedding granularity
 
@@ -286,3 +338,7 @@ class EmbeddingModel(EscapeModel):
         :return: A numpy array of predicted escape scores.
         """
         raise NotImplementedError  # TODO
+
+    def forward(self) -> torch.FloatTensor:
+        """TODO: docstring"""
+        pass
