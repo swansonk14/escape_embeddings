@@ -21,7 +21,7 @@ def generate_likelihood_ratios(hub_dir: str, esm_model: str, save_path: Path) ->
 
     :param hub_dir: Path to directory where torch hub models are saved.
     :param esm_model: Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm.
-    :param save_path: Path to PT file where a dictionary mapping protein name to embeddings will be saved.
+    :param save_path: Path to PT file where a dictionary mapping antigen name to likelihood will be saved.
     """
     # Load ESM-2 model
     model, alphabet, batch_converter = load_esm_model(hub_dir=hub_dir, esm_model=esm_model)
@@ -42,18 +42,16 @@ def generate_likelihood_ratios(hub_dir: str, esm_model: str, save_path: Path) ->
 
     token_probs = torch.cat(all_token_probs, dim=0).unsqueeze(0)
 
-    site_to_mutation_to_likelihood_ratio = {
-        RBD_START_SITE + idx: {
-            mutant_aa: (token_probs[0, 1 + idx, alphabet.get_idx(mutant_aa)]
-                        - token_probs[0, 1 + idx, alphabet.get_idx(wildtype_aa)]).item()
-            for mutant_aa in sorted(AA_ALPHABET_SET - {wildtype_aa})
-        }
-        for idx, wildtype_aa in enumerate(RBD_SEQUENCE)
+    name_to_likelihood_ratio = {
+        f'{RBD_START_SITE + i}_{mutant_aa}': (token_probs[0, 1 + i, alphabet.get_idx(mutant_aa)]
+                                              - token_probs[0, 1 + i, alphabet.get_idx(wildtype_aa)]).item()
+        for i, wildtype_aa in enumerate(RBD_SEQUENCE)
+        for mutant_aa in sorted(AA_ALPHABET_SET - {wildtype_aa})
     }
 
     # Save embeddings
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(site_to_mutation_to_likelihood_ratio, save_path)
+    torch.save(name_to_likelihood_ratio, save_path)
 
 
 if __name__ == '__main__':
@@ -63,7 +61,7 @@ if __name__ == '__main__':
         esm_model: str
         """Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm."""
         save_path: Path
-        """Path to PT file where a dictionary mapping protein name to embeddings will be saved."""
+        """Path to PT file where a dictionary mapping antigen name to likelihood will be saved."""
 
 
     generate_likelihood_ratios(**Args().parse_args().as_dict())

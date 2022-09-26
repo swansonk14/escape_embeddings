@@ -3,7 +3,20 @@ from pathlib import Path
 from typing import Literal, Optional
 
 import pandas as pd
+import torch
 from tap import Tap
+from tqdm import tqdm
+
+from constants import (
+    ANTIBODY_COLUMN
+)
+
+
+def train_and_eval_escape(data: pd.DataFrame) -> None:
+    """Train and evaluate a model on predicting escape."""
+    # TODO: params docstring
+
+    pass
 
 
 def predict_escape(
@@ -28,6 +41,8 @@ def predict_escape(
         verbose: bool = False
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
+    # TODO: params docstring copied from args
+
     # Validate arguments
     if model_granularity == 'per-antibody':
         assert split_type not in {'antibody', 'antibody_group'}
@@ -54,11 +69,46 @@ def predict_escape(
     else:
         assert antibody_embeddings_path is None and antibody_embedding_method is None
 
+    # Create save directory
+    save_dir.mkdir(parents=True, exist_ok=True)
+
     # Load data
     data = pd.read_csv(data_path)
 
-    # Create save directory
-    save_dir.mkdir(parents=True, exist_ok=True)
+    # Load antigen embeddings
+    if antigen_embeddings_path is not None:
+        antigen_embeddings: dict[str, ] = torch.load(antigen_embeddings_path)
+
+        print(f'Loaded {len(antigen_embeddings):,} antigen embeddings with dimensionality '
+              f'{len(next(iter(antigen_embeddings.values())))}\n')
+    else:
+        antigen_embeddings = None
+
+    # Load antibody embeddings
+    if antibody_embeddings_path is not None:
+        antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = torch.load(antibody_embeddings_path)
+
+        print(f'Loaded {len(antibody_embeddings):,} antibody embeddings with dimensionality '
+              f'{len(next(iter(antibody_embeddings.values())))}\n')
+    else:
+        antibody_embeddings = None
+
+    # Train and evaluate escape depending on model granularity
+    if model_granularity == 'per-antibody':
+        antibodies = sorted(data[ANTIBODY_COLUMN].unique())
+
+        for antibody in tqdm(antibodies, desc='Antibodies'):
+            antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
+            train_and_eval_escape(
+                data=antibody_data
+            )
+
+    elif model_granularity == 'cross-antibody':
+        train_and_eval_escape(
+            data=data
+        )
+    else:
+        raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
 
 
 if __name__ == '__main__':
@@ -82,7 +132,7 @@ if __name__ == '__main__':
         hidden_layer_sizes: tuple[int, ...] = (100, 100, 100)
         """The sizes of the hidden layers of the MLP model that will be trained."""
         antigen_likelihood_path: Optional[Path] = None
-        """Path to PT file containing a dictionary mapping from site to mutation to (mutant - wildtype) likelihood."""
+        """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
         embedding_granularity: Optional[Literal['sequence', 'residue']] = None
         """The granularity of the embeddings, either a sequence average or per-residue embeddings."""
         antigen_embeddings_path: Optional[Path] = None
