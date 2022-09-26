@@ -317,64 +317,29 @@ class EmbeddingModel(EscapeModel, nn.Module):
         # Create activation function
         self.activation = nn.ReLU()
 
-        # Create output function
-        if self.binarize:
-            self.output_function = nn.Sigmoid()
-        else:
-            self.output_function = None
+        # Create sigmoid function
+        self.sigmoid = nn.Sigmoid()
 
         # TODO: create model and handle embedding granularity
 
-    def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'EscapeModel':
-        """Fits the model on the training escape data.
+    def prepare_embeddings(self,
+                           antibodies: Iterable[str],
+                           sites: Iterable[int],
+                           mutants: Iterable[str]) -> torch.FloatTensor:
+        """Prepare antibody and/or antigen embeddings for input to the model.
 
         :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
-        :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
-        :param escapes: A list of escape scores for each mutation at each site.
-        :return: The fitted model.
+        :return: A FloatTensor containing the antibody and/or antigen embeddings for input to the model.
         """
-        self.forward(
-            antibodies=antibodies,
-            sites=sites,
-            wildtypes=wildtypes,
-            mutants=mutants
-        )
-        raise NotImplementedError  # TODO
-
-    def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
-        """Makes escape predictions on the test data.
-
-        :param antibodies: A list of antibodies.
-        :param sites: A list of mutated sites.
-        :param wildtypes: A list of wildtype amino acids at each site.
-        :param mutants: A list of mutant amino acids at each site.
-        :return: A numpy array of predicted escape scores.
-        """
-        raise NotImplementedError  # TODO
-
-    def forward(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> torch.FloatTensor:
-        """TODO: docstring"""
         # Get site indices
         site_indices = torch.LongTensor(sites) - RBD_START_SITE
 
         # Get antigen mutant embeddings for the batch
         batch_antigen_mutant_embeddings = torch.stack([
-            self.antigen_embeddings[f'{site}_{mutant}'][site_index if self.embedding_granularity == 'residue' else slice(None)]
+            self.antigen_embeddings[f'{site}_{mutant}'][
+                site_index if self.embedding_granularity == 'residue' else slice(None)]
             for site, mutant, site_index in zip(sites, mutants, site_indices)
         ])
 
@@ -400,11 +365,68 @@ class EmbeddingModel(EscapeModel, nn.Module):
             if self.antibody_embedding_type == 'concatenation':
                 batch_embeddings = torch.cat((batch_antigen_embeddings, batch_antibody_embeddings), dim=1)
             elif self.antibody_embedding_type == 'attention':
-                breakpoint()  # TODO
-                pass
+                raise NotImplementedError  # TODO: implement this
             else:
                 raise ValueError(f'Antibody embedding type "{self.antibody_embedding_type} is not supported.')
         else:
             batch_embeddings = batch_antigen_embeddings
 
-        breakpoint()
+        return batch_embeddings
+
+    def fit(self,
+            antibodies: Iterable[str],
+            sites: Iterable[int],
+            wildtypes: Iterable[str],
+            mutants: Iterable[str],
+            escapes: Iterable[float]) -> 'EscapeModel':
+        """Fits the model on the training escape data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :param escapes: A list of escape scores for each mutation at each site.
+        :return: The fitted model.
+        """
+        batch_embeddings = self.prepare_embeddings(
+            antibodies=antibodies,
+            sites=sites,
+            mutants=mutants
+        )
+        preds = self.forward(batch_embeddings)
+        raise NotImplementedError  # TODO
+
+    def predict(self,
+                antibodies: Iterable[str],
+                sites: Iterable[int],
+                wildtypes: Iterable[str],
+                mutants: Iterable[str]) -> np.ndarray:
+        """Makes escape predictions on the test data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :return: A numpy array of predicted escape scores.
+        """
+        raise NotImplementedError  # TODO
+
+    def forward(self, batch_embeddings: torch.FloatTensor) -> torch.FloatTensor:
+        """TODO: docstring"""
+        # Apply layers
+        x = batch_embeddings
+
+        for i, layer in enumerate(self.layers):
+            # TODO: dropout or batch norm?
+            x = layer(x)
+
+            if i != len(self.layers) - 1:
+                x = self.activation(x)
+
+        # Apply sigmoid if appropriate
+        if not self.training and self.binarize:
+            output = self.sigmoid(x)
+        else:
+            output = x
+
+        return output
