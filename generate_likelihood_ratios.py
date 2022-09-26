@@ -16,9 +16,7 @@ from constants import (
 from generate_embeddings import load_esm_model
 
 
-def generate_likelihood_ratios(hub_dir: str,
-                               esm_model: str,
-                               save_path: Path) -> None:
+def generate_likelihood_ratios(hub_dir: str, esm_model: str, save_path: Path) -> None:
     """Generate likelihood ratios of mutant vs wildtype antigens using the ESM2 model from https://github.com/facebookresearch/esm.
 
     :param hub_dir: Path to directory where torch hub models are saved.
@@ -66,5 +64,6 @@ if __name__ == '__main__':
         """Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm."""
         save_path: Path
         """Path to PT file where a dictionary mapping protein name to embeddings will be saved."""
+
 
     generate_likelihood_ratios(**Args().parse_args().as_dict())

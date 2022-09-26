@@ -63,8 +63,8 @@ Antigen embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
-    --esm_model esm2_t48_15B_UR50D \
-    --last_layer 48 \
+    --esm_model esm2_t33_650M_UR50D \
+    --last_layer 33 \
     --embedding_type antigen \
     --save_path embeddings/antigen_embeddings.pt
 ```
@@ -72,9 +72,9 @@ python generate_embeddings.py \
 Antibody embeddings
 ```bash
 python generate_embeddings.py \
-    --hub_dir models \
-    --esm_model esm2_t48_15B_UR50D \
-    --last_layer 48 \
+    --hub_dir models \esm2_t33_650M_UR50D
+    --esm_model esm2_t33_650M_UR50D \
+    --last_layer 33 \
     --embedding_type antibody \
     --save_path embeddings/antibody_embeddings.pt \
     --antibody_path data/antibodies.csv
@@ -84,8 +84,8 @@ Antigen embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
-    --esm_model esm2_t48_15B_UR50D \
-    --last_layer 48 \
+    --esm_model esm2_t33_650M_UR50D \
+    --last_layer 33 \
     --embedding_type antibody-antigen \
     --save_path embeddings/antibody_antigen_embeddings.pt \
     --antibody_path data/antibodies.csv
@@ -99,6 +99,6 @@ Generate mutant vs wildtype antigen likelihood ratios with an ESM2 model.
 ```bash
 python generate_likelihood_ratios.py \
     --hub_dir models \
-    --esm_model esm2_t48_15B_UR50D \
+    --esm_model esm2_t33_650M_UR50D \
     --save_path embeddings/antigen_likelihood_ratios.pt
 ```

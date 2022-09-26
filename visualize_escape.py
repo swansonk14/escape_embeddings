@@ -18,8 +18,7 @@ from constants import (
 )
 
 
-def visualize_escape_score_histogram(data: pd.DataFrame,
-                                     save_path: Path) -> None:
+def visualize_escape_score_histogram(data: pd.DataFrame, save_path: Path) -> None:
     """Visualize escape scores as a histogram.
 
     :param data: DataFrame containing escape data.
@@ -34,14 +33,14 @@ def visualize_escape_score_histogram(data: pd.DataFrame,
     plt.savefig(save_path)
 
 
-def visualize_escape_by_antibody_site(data: pd.DataFrame,
-                                      save_path: Path) -> None:
+def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> None:
     """Visualize escape per antibody per site.
 
     :param data: DataFrame containing escape data.
     :param save_path: Path to PDF/PNG file where escape score plot by antibody site will be saved.
     """
-    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
+    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[
+        ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
 
     antibodies = escape[ANTIBODY_COLUMN].unique()
     sites = escape[SITE_COLUMN].unique()
@@ -63,8 +62,7 @@ def visualize_escape_by_antibody_site(data: pd.DataFrame,
     plt.savefig(save_path)
 
 
-def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame,
-                                               antibody_data: pd.DataFrame,
+def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data: pd.DataFrame,
                                                save_path: Path) -> None:
     """Visualize escape per antibody per site by antibody group.
 
@@ -72,7 +70,8 @@ def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame,
     :param antibody_data: DataFrame containing antibody data (including antibody groups).
     :param save_path: Path to PDF/PNG file where escape score plot by antibody site by group will be saved.
     """
-    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
+    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[
+        ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
 
     antibodies = escape[ANTIBODY_COLUMN].unique()
     sites = escape[SITE_COLUMN].unique()
@@ -110,14 +109,14 @@ def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame,
     plt.savefig(save_path, dpi=1200)
 
 
-def visualize_escape_by_amino_acid_change(data: pd.DataFrame,
-                                          save_path: Path) -> None:
+def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -> None:
     """Visualize escape per amino acid change (pair of old and new).
 
     :param data: DataFrame containing escape data.
     :param save_path: Path to PDF/PNG file where escape score plot by amino acid change will be saved.
     """
-    escape = data.groupby([WILDTYPE_COLUMN, MUTATION_COLUMN])[ESCAPE_COLUMN].mean().reset_index()  # mean escape per aa change
+    escape = data.groupby([WILDTYPE_COLUMN, MUTATION_COLUMN])[
+        ESCAPE_COLUMN].mean().reset_index()  # mean escape per aa change
 
     wildtype = escape[WILDTYPE_COLUMN].unique()
     mutation = escape[MUTATION_COLUMN].unique()
@@ -183,5 +182,6 @@ if __name__ == '__main__':
         """Path to CSV file containing antibody data."""
         save_dir: Path
         """Path to directory where plots will be saved."""
+
 
     visualize_escape(**Args().parse_args().as_dict())

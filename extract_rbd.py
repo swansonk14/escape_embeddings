@@ -47,4 +47,5 @@ if __name__ == '__main__':
         data_path: Path
         """Path to CSV file containing mutation data."""
 
+
     extract_rbd(**Args().parse_args().as_dict())

@@ -76,10 +76,12 @@ def load_esm_model(hub_dir: str, esm_model: str) -> tuple[ESM2, Alphabet, BatchC
     return model, alphabet, batch_converter
 
 
-def generate_esm_embeddings(model: ESM2,
-                            last_layer: int,
-                            batch_converter: BatchConverter,
-                            sequences: list[tuple[str, str]]) -> dict[str, torch.FloatTensor]:
+def generate_esm_embeddings(
+        model: ESM2,
+        last_layer: int,
+        batch_converter: BatchConverter,
+        sequences: list[tuple[str, str]]
+) -> dict[str, torch.FloatTensor]:
     """Generate embeddings using an ESM2 model from https://github.com/facebookresearch/esm.
 
     :param model: A pretrained ESM2 model.
@@ -114,12 +116,14 @@ def generate_esm_embeddings(model: ESM2,
     return name_to_embedding
 
 
-def generate_embeddings(hub_dir: str,
-                        esm_model: str,
-                        last_layer: int,
-                        embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
-                        save_path: Path,
-                        antibody_path: Optional[Path] = None) -> None:
+def generate_embeddings(
+        hub_dir: str,
+        esm_model: str,
+        last_layer: int,
+        embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
+        save_path: Path,
+        antibody_path: Optional[Path] = None
+) -> None:
     """Generate antigen/antibody embeddings using the ESM2 model from https://github.com/facebookresearch/esm.
 
     :param hub_dir: Path to directory where torch hub models are saved.
@@ -197,5 +201,6 @@ if __name__ == '__main__':
         """Path to PT file where a dictionary mapping protein name to embeddings will be saved."""
         antibody_path: Optional[Path] = None
         """Path to a file containing antibody sequences."""
+
 
     generate_embeddings(**Args().parse_args().as_dict())
