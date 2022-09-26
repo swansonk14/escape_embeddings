@@ -246,7 +246,7 @@ class EmbeddingModel(EscapeModel):
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_sizes = hidden_layer_sizes
 
-        # TODO: create model
+        # TODO: create model and handle embedding granularity
 
     @abstractmethod
     def fit(self,

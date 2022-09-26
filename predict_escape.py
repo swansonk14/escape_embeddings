@@ -1,4 +1,5 @@
 """Train a model to predict antigen escape using ESM2 embeddings."""
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -108,7 +109,8 @@ def train_and_eval_escape(
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
         split_seed: int = 0,
-        model_seed: int = 0
+        model_seed: int = 0,
+        verbose: bool = True
 ) -> tuple[dict[str, float], EscapeModel]:
     """Train and evaluate a model on predicting escape.
 
@@ -116,12 +118,14 @@ def train_and_eval_escape(
     """
     # TODO: params docstring
 
-    print(f'Data size = {len(data)}:,')
+    if verbose:
+        print(f'Data size = {len(data):,}')
 
     # Remove wildtype sequences
     data = data[data[WILDTYPE_COLUMN] != data[MUTANT_COLUMN]]
 
-    print(f'Data size after removing wildtype sequences = {len(data):,}')
+    if verbose:
+        print(f'Data size after removing wildtype sequences = {len(data):,}')
 
     # Split data
     train_data, test_data = split_data(
@@ -132,8 +136,9 @@ def train_and_eval_escape(
         split_seed=split_seed
     )
 
-    print(f'Train size = {len(train_data):,}')
-    print(f'Test size = {len(test_data):,}')
+    if verbose:
+        print(f'Train size = {len(train_data):,}')
+        print(f'Test size = {len(test_data):,}')
 
     # Build model
     if model_type == 'mutation':
@@ -156,7 +161,8 @@ def train_and_eval_escape(
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
 
-    print(f'Model = {model.__class__.__name__}')
+    if verbose:
+        print(f'Model = {model.__class__.__name__}')
 
     # Train model
     model.fit(
@@ -188,8 +194,9 @@ def train_and_eval_escape(
         'R2': r2_score(test_escape, test_preds)
     }
 
-    for metric, value in results.items():
-        print(f'Test {metric} = {value:.3f}')
+    if verbose:
+        for metric, value in results.items():
+            print(f'Test {metric} = {value:.3f}')
 
     return results, model
 
@@ -235,7 +242,7 @@ def predict_escape(
                and embedding_granularity is not None
     else:
         assert antigen_embeddings_path is None and antigen_embedding_type is None \
-               and embedding_granularity is None and antibody_embeddings_path is not None
+               and embedding_granularity is None and antibody_embeddings_path is None
 
     if antibody_embeddings_path is not None:
         assert antibody_embedding_type is not None
@@ -296,10 +303,43 @@ def predict_escape(
                 antibody_embedding_type=antibody_embedding_type,
                 hidden_layer_sizes=hidden_layer_sizes,
                 split_seed=split_seed,
-                model_seed=model_seed
+                model_seed=model_seed,
+                verbose=False
             )
             all_results.append(results)
             all_models.append(model)
+
+            # Create antibody save dir
+            antibody_save_dir = save_dir / antibody
+            antibody_save_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save results
+            with open(antibody_save_dir / 'results.json', 'w') as f:
+                json.dump(results, f, indent=4, sort_keys=True)
+
+            # Save model
+            torch.save(model, antibody_save_dir / 'model.pt')
+
+        # Compute summary results
+        metrics = all_results[0].keys()
+        all_results = {
+            metric: [result[metric] for result in all_results]
+            for metric in metrics
+        }
+        summary_results = {
+            metric: {
+                'mean': np.mean(all_results[metric]),
+                'std': np.std(all_results[metric])
+            }
+            for metric in metrics
+        }
+
+        for metric, values in summary_results.items():
+            print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f}')
+
+        # Save summary results
+        with open(save_dir / 'summary_results.json', 'w') as f:
+            json.dump(summary_results, f, indent=4, sort_keys=True)
 
         # TODO: do something with results and models
     elif model_granularity == 'cross-antibody':
@@ -318,8 +358,16 @@ def predict_escape(
             antibody_embedding_type=antibody_embedding_type,
             hidden_layer_sizes=hidden_layer_sizes,
             split_seed=split_seed,
-            model_seed=model_seed
+            model_seed=model_seed,
+            verbose=True
         )
+
+        # Save results
+        with open(save_dir / 'results.json', 'w') as f:
+            json.dump(results, f, indent=4, sort_keys=True)
+
+        # Save model
+        torch.save(model, save_dir / 'model.pt')
         # TODO: do something with results and model
     else:
         raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
@@ -362,5 +410,8 @@ if __name__ == '__main__':
         model_seed: int = 0
         """The random seed for the model weight initialization."""
 
+    args = Args().parse_args()
+    args.save_dir.mkdir(parents=True, exist_ok=True)
+    args.save(args.save_dir / 'args.json')
 
-    predict_escape(**Args().parse_args().as_dict())
+    predict_escape(**args.as_dict())
