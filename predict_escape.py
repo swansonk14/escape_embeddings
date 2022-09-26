@@ -74,6 +74,7 @@ def split_data(
 
             # Get antibody groups
             antibody_name_to_group = dict(zip(antibody_data[ANTIBODY_NAME_COLUMN], antibody_data[EPITOPE_GROUP_COLUMN]))
+            data = data.copy()
             data[EPITOPE_GROUP_COLUMN] = [
                 antibody_name_to_group[ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody)]
                 for antibody in data[ANTIBODY_COLUMN]
@@ -83,8 +84,8 @@ def split_data(
             antibody_groups = sorted(data[EPITOPE_GROUP_COLUMN].unique())
             train_antibody_groups, test_antibody_groups = train_test_split(antibody_groups,
                                                                            random_state=split_seed, test_size=0.2)
-            train_data = data[data[ANTIBODY_COLUMN].isin(train_antibody_groups)]
-            test_data = data[data[ANTIBODY_COLUMN].isin(test_antibody_groups)]
+            train_data = data[data[EPITOPE_GROUP_COLUMN].isin(train_antibody_groups)]
+            test_data = data[data[EPITOPE_GROUP_COLUMN].isin(test_antibody_groups)]
         else:
             raise ValueError(f'Antibody group method "{antibody_group_method}" is not supported.')
 
