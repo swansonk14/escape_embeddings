@@ -6,12 +6,27 @@ from typing import Literal, Optional
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.model_selection import train_test_split
 from tap import Tap
 from tqdm import tqdm
 
 from constants import (
-    ANTIBODY_COLUMN
+    ANTIBODY_COLUMN,
+    ANTIBODY_CONDITION_TO_NAME,
+    ANTIBODY_NAME_COLUMN,
+    EPITOPE_GROUP_COLUMN,
+    SITE_COLUMN
 )
+
+# Literal types
+MODEL_TYPE_OPTIONS = Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
+MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
+TASK_TYPE_OPTIONS = Literal['classification', 'regression']
+SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
+ANTIBODY_GROUP_METHOD_OPTIONS = Literal['sequence', 'embedding', 'escape']
+EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
+ANTIGEN_EMBEDDING_TYPE_OPTIONS = Literal['mutant', 'difference']
+ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention']
 
 
 class SiteModel:
@@ -87,30 +102,100 @@ class MutationModel:
         ])
 
 
-def train_and_eval_escape(data: pd.DataFrame) -> tuple:  # TODO: specify return type
+def split_data(
+        data: pd.DataFrame,
+        split_type: SPLIT_TYPE_OPTIONS,
+        antibody_path: Optional[Path] = None,
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split data into train and test DataFrames."""
+    # TODO: params docstring
+
+    if split_type == 'mutation':
+        indices = np.arange(len(data))
+        train_indices, test_indices = train_test_split(indices, random_state=0, test_size=0.2)
+        train_data = data.iloc[train_indices]
+        test_data = data.iloc[test_indices]
+
+    elif split_type == 'site':
+        sites = sorted(data[SITE_COLUMN].unique())
+        train_sites, test_sites = train_test_split(sites, random_state=0, test_size=0.2)
+        train_data = data[data[SITE_COLUMN].isin(train_sites)]
+        test_data = data[data[SITE_COLUMN].isin(test_sites)]
+
+    elif split_type == 'antibody':
+        antibodies = sorted(data[ANTIBODY_COLUMN].unique())
+        train_antibodies, test_antibodies = train_test_split(antibodies, random_state=0, test_size=0.2)
+        train_data = data[data[ANTIBODY_COLUMN].isin(train_antibodies)]
+        test_data = data[data[ANTIBODY_COLUMN].isin(test_antibodies)]
+
+    elif split_type == 'antibody_group':
+        if antibody_group_method == 'sequence':
+            raise NotImplementedError
+
+        elif antibody_group_method == 'embedding':
+            raise NotImplementedError
+
+        elif antibody_group_method == 'escape':
+            # Load antibody data
+            antibody_data = pd.read_csv(antibody_path)
+
+            # Get antibody groups
+            antibody_name_to_group = dict(zip(antibody_data[ANTIBODY_NAME_COLUMN], antibody_data[EPITOPE_GROUP_COLUMN]))
+            data[EPITOPE_GROUP_COLUMN] = [
+                antibody_name_to_group[ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody)]
+                for antibody in data[ANTIBODY_COLUMN]
+            ]
+
+            # Split based on antibody group
+            antibody_groups = sorted(data[EPITOPE_GROUP_COLUMN].unique())
+            train_antibody_groups, test_antibody_groups = train_test_split(antibody_groups, random_state=0, test_size=0.2)
+            train_data = data[data[ANTIBODY_COLUMN].isin(train_antibody_groups)]
+            test_data = data[data[ANTIBODY_COLUMN].isin(test_antibody_groups)]
+        else:
+            raise ValueError(f'Antibody group method "{antibody_group_method}" is not supported.')
+
+    else:
+        raise ValueError(f'Split type "{split_type}" is not supported.')
+
+    return train_data, test_data
+
+
+def train_and_eval_escape(
+        data: pd.DataFrame,
+        split_type: SPLIT_TYPE_OPTIONS,
+        antibody_path: Optional[Path] = None,
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
+) -> tuple:  # TODO: specify return type
     """Train and evaluate a model on predicting escape."""
     # TODO: params docstring
 
     # Split data
+    train_data, test_data = split_data(
+        data=data,
+        split_type=split_type,
+        antibody_path=antibody_path,
+        antibody_group_method=antibody_group_method
+    )
 
 
 def predict_escape(
         data_path: Path,
         save_dir: Path,
-        model_type: Literal['mutation_model', 'site_model', 'likelihood', 'embedding'],
-        model_granularity: Literal['per-antibody', 'cross-antibody'],
-        task_type: Literal['classification', 'regression'],
-        split_type: Literal['mutation', 'site', 'antibody', 'antibody_group'],
+        model_type: MODEL_TYPE_OPTIONS,
+        model_granularity: MODEL_GRANULARITY_OPTIONS,
+        task_type: TASK_TYPE_OPTIONS,
+        split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[Literal['sequence', 'embedding', 'escape']] = None,
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         hidden_layer_sizes: tuple[int, ...] = (100, 100, 100),
         antigen_likelihood_path: Optional[Path] = None,
-        embedding_granularity: Optional[Literal['sequence', 'residue']] = None,
+        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embeddings_path: Optional[Path] = None,
-        antigen_embedding_type: Optional[Literal['mutant', 'difference']] = None,
+        antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         use_antibody_embeddings: bool = False,
         antibody_embeddings_path: Optional[Path] = None,
-        antibody_embedding_method: Optional[Literal['concatenation', 'attention']] = None,
+        antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         split_seed: int = 0,
         model_seed: int = 0,
         verbose: bool = False
@@ -205,33 +290,33 @@ if __name__ == '__main__':
         """Path to CSV file containing antibody escape data."""
         save_dir: Path
         """Path to directory where results and models will be saved."""
-        model_granularity: Literal['per-antibody', 'cross-antibody']
+        model_granularity: MODEL_GRANULARITY_OPTIONS
         """The granularity of the model, either one model per antibody or one model across all antibodies."""
-        model_type: Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
+        model_type: MODEL_TYPE_OPTIONS
         """The type of model to train."""
-        task_type: Literal['classification', 'regression']
+        task_type: TASK_TYPE_OPTIONS
         """The type of task to perform."""
-        split_type: Literal['mutation', 'site', 'antibody', 'antibody_group']
+        split_type: SPLIT_TYPE_OPTIONS
         """The type of data split."""
         antibody_path: Optional[Path] = None
         """Path to a CSV file containing antibody sequences and groups."""
-        antibody_group_method: Optional[Literal['sequence', 'embedding', 'escape']] = None
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
         """The method of grouping antibodies for the antibody_group split type."""
         hidden_layer_sizes: tuple[int, ...] = (100, 100, 100)
         """The sizes of the hidden layers of the MLP model that will be trained."""
         antigen_likelihood_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
-        embedding_granularity: Optional[Literal['sequence', 'residue']] = None
+        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
         """The granularity of the embeddings, either a sequence average or per-residue embeddings."""
         antigen_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding."""
-        antigen_embedding_type: Optional[Literal['mutant', 'difference']] = None
+        antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None
         """The type of antigen embedding. mutant: The mutant embedding. difference: mutant - wildtype embedding."""
         use_antibody_embeddings: bool = False
         """Whether to use antibody embeddings in addition to antigen embeddings."""
         antibody_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
-        antibody_embedding_method: Optional[Literal['concatenation', 'attention']] = None
+        antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
         """Method of including the antibody embeddings with antigen embeddings."""
         split_seed: int = 0
         """The random seed for splitting the data."""
