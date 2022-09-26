@@ -207,8 +207,8 @@ def predict_escape(
         save_dir: Path,
         model_granularity: MODEL_GRANULARITY_OPTIONS,
         model_type: MODEL_TYPE_OPTIONS,
-        task_type: TASK_TYPE_OPTIONS,
         split_type: SPLIT_TYPE_OPTIONS,
+        task_type: TASK_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         antigen_likelihood_path: Optional[Path] = None,
@@ -234,7 +234,7 @@ def predict_escape(
         assert antibody_path is None and antibody_group_method is None
 
     if model_type == 'likelihood':
-        assert antigen_likelihood_path is not None
+        assert antigen_likelihood_path is not None and task_type == 'regression'
     else:
         assert antigen_likelihood_path is None
 

@@ -193,7 +193,6 @@ class LikelihoodModel(EscapeModel):
 
         self.antigen_likelihoods = antigen_likelihoods
 
-    @abstractmethod
     def fit(self,
             antibodies: Iterable[str],
             sites: Iterable[int],
@@ -211,7 +210,6 @@ class LikelihoodModel(EscapeModel):
         """
         return self
 
-    @abstractmethod
     def predict(self,
                 antibodies: Iterable[str],
                 sites: Iterable[int],
