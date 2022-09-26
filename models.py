@@ -409,10 +409,11 @@ class EmbeddingModel(EscapeModel):
 
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
-                 embedding_granularity: EMBEDDING_GRANULARITY_OPTIONS,
                  antigen_embeddings: dict[str, torch.FloatTensor],
+                 antigen_embedding_granularity: EMBEDDING_GRANULARITY_OPTIONS,
                  antigen_embedding_type: ANTIGEN_EMBEDDING_TYPE_OPTIONS,
                  antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
+                 antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
                  num_epochs: int = DEFAULT_NUM_EPOCHS,
@@ -427,10 +428,11 @@ class EmbeddingModel(EscapeModel):
 
         assert (antibody_embeddings is None) == (antibody_embedding_type is None)
 
-        self.embedding_granularity = embedding_granularity
         self.antigen_embeddings = antigen_embeddings
+        self.antigen_embedding_granularity = antigen_embedding_granularity
         self.antigen_embedding_type = antigen_embedding_type
         self.antibody_embeddings = antibody_embeddings
+        self.antibody_embedding_granularity = antibody_embedding_granularity
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_dims = hidden_layer_dims
         self.num_epochs = num_epochs
@@ -450,24 +452,24 @@ class EmbeddingModel(EscapeModel):
             self.antibody_embedding_dim = None
 
         # Optionally compute average sequence embeddings
-        if self.embedding_granularity == 'sequence':
+        if self.antigen_embedding_granularity == 'sequence':
             self.antigen_embeddings = {
                 name: embedding.mean(dim=0)
                 for name, embedding in self.antigen_embeddings.items()
             }
 
-            if self.antibody_embeddings is not None:
-                self.antibody_embeddings = {
-                    name: embedding.mean(dim=0)
-                    for name, embedding in self.antibody_embeddings.items()
-                }
+        if self.antibody_embeddings is not None and self.antibody_embedding_granularity == 'sequence':
+            self.antibody_embeddings = {
+                name: embedding.mean(dim=0)
+                for name, embedding in self.antibody_embeddings.items()
+            }
 
         # Get wildtype embedding
         self.wildtype_embedding = self.antigen_embeddings['wildtype']
 
         # Set up input and output dims
         if self.antibody_embeddings is not None and self.antibody_embedding_type == 'concatenation':
-            self.input_dim = self.antigen_embedding_dim + self.antibody_embedding_dim
+            self.input_dim = self.antigen_embedding_dim + 2 * self.antibody_embedding_dim
             # TODO: handle attention
         else:
             self.input_dim = self.antigen_embedding_dim
@@ -513,7 +515,8 @@ class EmbeddingModel(EscapeModel):
         # Get antigen mutant embeddings for the batch
         batch_antigen_mutant_embeddings = torch.stack([
             self.antigen_embeddings[f'{site}_{mutant}'][
-                site_index if self.embedding_granularity == 'residue' else slice(None)]
+                site_index if self.antigen_embedding_granularity == 'residue' else slice(None)
+            ]
             for site, mutant, site_index in zip(sites, mutants, site_indices)
         ])
 
@@ -523,7 +526,7 @@ class EmbeddingModel(EscapeModel):
         elif self.antigen_embedding_type == 'difference':
             batch_antigen_embeddings = (
                     batch_antigen_mutant_embeddings
-                    - self.wildtype_embedding[site_indices if self.embedding_granularity == 'residue' else slice(None)]
+                    - self.wildtype_embedding[site_indices if self.antigen_embedding_granularity == 'residue' else slice(None)]
             )
         else:
             raise ValueError(f'Antigen embedding type "{self.antigen_embedding_type}" is not supported.')
@@ -586,6 +589,8 @@ class EmbeddingModel(EscapeModel):
             num_workers=0,  # TODO: enable parallel workers
             collate_fn=self.collate_embeddings_and_escape
         )
+
+        # TODO: monitor loss
 
         # Train
         for _ in trange(self.num_epochs, desc='Epochs', leave=False):

@@ -105,10 +105,11 @@ def train_and_eval_escape(
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         antigen_likelihoods: Optional[dict[str, float]] = None,
-        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
+        antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
+        antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
         num_epochs: int = DEFAULT_NUM_EPOCHS,
@@ -155,10 +156,11 @@ def train_and_eval_escape(
     elif model_type == 'embedding':
         model = EmbeddingModel(
             task_type=task_type,
-            embedding_granularity=embedding_granularity,
             antigen_embeddings=antigen_embeddings,
+            antigen_embedding_granularity=antigen_embedding_granularity,
             antigen_embedding_type=antigen_embedding_type,
             antibody_embeddings=antibody_embeddings,
+            antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -219,10 +221,11 @@ def predict_escape(
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         antigen_likelihood_path: Optional[Path] = None,
-        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embeddings_path: Optional[Path] = None,
+        antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         antibody_embeddings_path: Optional[Path] = None,
+        antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
         num_epochs: int = DEFAULT_NUM_EPOCHS,
@@ -250,15 +253,18 @@ def predict_escape(
 
     if model_type == 'embedding':
         assert antigen_embeddings_path is not None and antigen_embedding_type is not None \
-               and embedding_granularity is not None
+               and antigen_embedding_granularity is not None
     else:
         assert antigen_embeddings_path is None and antigen_embedding_type is None \
-               and embedding_granularity is None and antibody_embeddings_path is None
+               and antigen_embedding_granularity is None and antibody_embeddings_path is None
 
     if antibody_embeddings_path is not None:
-        assert antibody_embedding_type is not None
+        assert antibody_embedding_type is not None and antibody_embedding_granularity is not None
     else:
-        assert antibody_embedding_type is None
+        assert antibody_embedding_type is None and antibody_embedding_granularity is None
+
+    if antibody_embedding_granularity == 'residue':
+        assert antibody_embedding_type == 'attention'
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -310,17 +316,18 @@ def predict_escape(
                 antibody_path=antibody_path,
                 antibody_group_method=antibody_group_method,
                 antigen_likelihoods=antigen_likelihoods,
-                embedding_granularity=embedding_granularity,
                 antigen_embeddings=antigen_embeddings,
+                antigen_embedding_granularity=antigen_embedding_granularity,
                 antigen_embedding_type=antigen_embedding_type,
                 antibody_embeddings=antibody_embeddings,
+                antibody_embedding_granularity=antibody_embedding_granularity,
                 antibody_embedding_type=antibody_embedding_type,
                 hidden_layer_dims=hidden_layer_dims,
                 num_epochs=num_epochs,
                 batch_size=batch_size,
                 split_seed=split_seed,
                 model_seed=model_seed,
-                verbose=False
+                verbose=True  # TODO: change to False
             )
             all_results.append(results)
             all_models.append(model)
@@ -369,10 +376,11 @@ def predict_escape(
             antibody_path=antibody_path,
             antibody_group_method=antibody_group_method,
             antigen_likelihoods=antigen_likelihoods,
-            embedding_granularity=embedding_granularity,
             antigen_embeddings=antigen_embeddings,
+            antigen_embedding_granularity=antigen_embedding_granularity,
             antigen_embedding_type=antigen_embedding_type,
             antibody_embeddings=antibody_embeddings,
+            antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
             hidden_layer_dims=hidden_layer_dims,
             num_epochs=num_epochs,
@@ -412,14 +420,16 @@ if __name__ == '__main__':
         """The method of grouping antibodies for the antibody_group split type."""
         antigen_likelihood_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
-        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
-        """The granularity of the embeddings, either a sequence average or per-residue embeddings."""
         antigen_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding."""
+        antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
+        """The granularity of the antigen embeddings, either a sequence average or per-residue embeddings."""
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None
         """The type of antigen embedding. mutant: The mutant embedding. difference: mutant - wildtype embedding."""
         antibody_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
+        antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
+        """The granularity of the antibody embeddings, either a sequence average or per-residue embeddings."""
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
         """Method of including the antibody embeddings with antigen embeddings."""
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS
