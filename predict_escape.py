@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.metrics import average_precision_score, roc_auc_score, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from tap import Tap
 from tqdm import tqdm
@@ -22,36 +23,13 @@ from constants import (
     ESCAPE_COLUMN,
     MODEL_GRANULARITY_OPTIONS,
     MODEL_TYPE_OPTIONS,
-    MUTATION_COLUMN,
-    RBD_SEQUENCE,
+    MUTANT_COLUMN,
     SITE_COLUMN,
     SPLIT_TYPE_OPTIONS,
     TASK_TYPE_OPTIONS,
     WILDTYPE_COLUMN
 )
-
-
-def prune_wildtype_sequences(data: pd.DataFrame) -> pd.DataFrame:
-    """Prune wildtype sequences from a DataFrame so that there is only one wildtype seqeunce.
-
-    :param data: DataFrame containing mutation escape data with multiple wildtype sequences.
-    :return: A new DataFrame containing mutation escape data with only one wildtype sequence
-    """
-    # Get mask of wildtype sequences in data
-    wildtype_mask = data[WILDTYPE_COLUMN] == data[MUTATION_COLUMN]
-
-    # Ensure one wildtype sequence for each RBD site
-    assert sum(wildtype_mask) == len(RBD_SEQUENCE)
-
-    # Ensure all wildtype sequences have zero escape
-    assert all(data[wildtype_mask][ESCAPE_COLUMN] == 0)
-
-    # Keep only one copy of wildtype sequence
-    first_wildtype_idx = wildtype_mask.idxmax()
-    wildtype_mask.iloc[first_wildtype_idx] = False
-    data = data[~wildtype_mask]
-
-    return data
+from models import EmbeddingModel, EscapeModel, LikelihoodModel, MutationModel, SiteModel
 
 
 def split_data(
@@ -117,20 +95,33 @@ def split_data(
 
 def train_and_eval_escape(
         data: pd.DataFrame,
+        model_type: MODEL_TYPE_OPTIONS,
+        task_type: TASK_TYPE_OPTIONS,
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
-        split_seed: int = 0
-) -> tuple:  # TODO: specify return type (results, model)
-    """Train and evaluate a model on predicting escape."""
+        antigen_likelihoods: Optional[dict[str, float]] = None,
+        embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
+        antigen_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
+        antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
+        antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
+        antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
+        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
+        split_seed: int = 0,
+        model_seed: int = 0
+) -> tuple[dict[str, float], EscapeModel]:
+    """Train and evaluate a model on predicting escape.
+
+    :return: A tuple containing the results (dict mapping metric name to value) and trained model.
+    """
     # TODO: params docstring
 
     print(f'Data size = {len(data)}:,')
 
-    # Prune wildtype sequences to leave only one
-    data = prune_wildtype_sequences(data=data)
+    # Remove wildtype sequences
+    data = data[data[WILDTYPE_COLUMN] != data[MUTANT_COLUMN]]
 
-    print(f'Data size after pruning wildtype sequences = {len(data):,}')
+    print(f'Data size after removing wildtype sequences = {len(data):,}')
 
     # Split data
     train_data, test_data = split_data(
@@ -144,7 +135,63 @@ def train_and_eval_escape(
     print(f'Train size = {len(train_data):,}')
     print(f'Test size = {len(test_data):,}')
 
+    # Build model
+    if model_type == 'mutation':
+        model = MutationModel(task_type=task_type)
+    elif model_type == 'site':
+        model = SiteModel(task_type=task_type)
+    elif model_type == 'likelihood':
+        model = LikelihoodModel(task_type=task_type, antigen_likelihoods=antigen_likelihoods)
+    elif model_type == 'embedding':
+        # TODO: set model seed
+        model = EmbeddingModel(
+            task_type=task_type,
+            embedding_granularity=embedding_granularity,
+            antigen_embeddings=antigen_embeddings,
+            antigen_embedding_type=antigen_embedding_type,
+            antibody_embeddings=antibody_embeddings,
+            antibody_embedding_type=antibody_embedding_type,
+            hidden_layer_sizes=hidden_layer_sizes
+        )
+    else:
+        raise ValueError(f'Model type "{model_type}" is not supported.')
 
+    print(f'Model = {model.__class__.__name__}')
+
+    # Train model
+    model.fit(
+        antibodies=train_data[ANTIBODY_COLUMN],
+        sites=train_data[SITE_COLUMN],
+        wildtypes=train_data[WILDTYPE_COLUMN],
+        mutants=train_data[MUTANT_COLUMN],
+        escapes=train_data[ESCAPE_COLUMN]
+    )
+
+    # Make predictions
+    test_preds = model.predict(
+        antibodies=test_data[ANTIBODY_COLUMN],
+        sites=test_data[SITE_COLUMN],
+        wildtypes=test_data[WILDTYPE_COLUMN],
+        mutants=test_data[MUTANT_COLUMN]
+    )
+
+    # Binarize test escape scores
+    test_escape = test_data[ESCAPE_COLUMN]
+    binary_test_escape = (test_escape > 0).astype(int)
+
+    # Evaluate predictions
+    # TODO: average by antibody or across mutations?
+    results = {
+        'ROC-AUC': roc_auc_score(binary_test_escape, test_preds),
+        'PRC-AUC': average_precision_score(binary_test_escape, test_preds),
+        'MSE': mean_squared_error(test_escape, test_preds),
+        'R2': r2_score(test_escape, test_preds)
+    }
+
+    for metric, value in results.items():
+        print(f'Test {metric} = {value:.3f}')
+
+    return results, model
 
 
 def predict_escape(
@@ -161,7 +208,7 @@ def predict_escape(
         antigen_embeddings_path: Optional[Path] = None,
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         antibody_embeddings_path: Optional[Path] = None,
-        antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
+        antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
         split_seed: int = 0,
         model_seed: int = 0
@@ -191,9 +238,9 @@ def predict_escape(
                and embedding_granularity is None and antibody_embeddings_path is not None
 
     if antibody_embeddings_path is not None:
-        assert antibody_embedding_method is not None
+        assert antibody_embedding_type is not None
     else:
-        assert antibody_embedding_method is None
+        assert antibody_embedding_type is None
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -236,10 +283,20 @@ def predict_escape(
             antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
             results, model = train_and_eval_escape(
                 data=antibody_data,
+                model_type=model_type,
+                task_type=task_type,
                 split_type=split_type,
                 antibody_path=antibody_path,
                 antibody_group_method=antibody_group_method,
-                split_seed=split_seed
+                antigen_likelihoods=antigen_likelihoods,
+                embedding_granularity=embedding_granularity,
+                antigen_embeddings=antigen_embeddings,
+                antigen_embedding_type=antigen_embedding_type,
+                antibody_embeddings=antibody_embeddings,
+                antibody_embedding_type=antibody_embedding_type,
+                hidden_layer_sizes=hidden_layer_sizes,
+                split_seed=split_seed,
+                model_seed=model_seed
             )
             all_results.append(results)
             all_models.append(model)
@@ -248,10 +305,20 @@ def predict_escape(
     elif model_granularity == 'cross-antibody':
         results, model = train_and_eval_escape(
             data=data,
+            model_type=model_type,
+            task_type=task_type,
             split_type=split_type,
             antibody_path=antibody_path,
             antibody_group_method=antibody_group_method,
-            split_seed=split_seed
+            antigen_likelihoods=antigen_likelihoods,
+            embedding_granularity=embedding_granularity,
+            antigen_embeddings=antigen_embeddings,
+            antigen_embedding_type=antigen_embedding_type,
+            antibody_embeddings=antibody_embeddings,
+            antibody_embedding_type=antibody_embedding_type,
+            hidden_layer_sizes=hidden_layer_sizes,
+            split_seed=split_seed,
+            model_seed=model_seed
         )
         # TODO: do something with results and model
     else:
@@ -286,7 +353,7 @@ if __name__ == '__main__':
         """The type of antigen embedding. mutant: The mutant embedding. difference: mutant - wildtype embedding."""
         antibody_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
-        antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
+        antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
         """Method of including the antibody embeddings with antigen embeddings."""
         hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES
         """The sizes of the hidden layers of the MLP model that will be trained."""

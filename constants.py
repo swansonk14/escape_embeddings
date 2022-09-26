@@ -15,7 +15,7 @@ EPITOPE_GROUP_COLUMN = 'epitope group'
 ESCAPE_COLUMN = 'mut_escape'
 HEAVY_CHAIN_COLUMN = 'Hchain'
 LIGHT_CHAIN_COLUMN = 'Lchain'
-MUTATION_COLUMN = 'mutation'
+MUTANT_COLUMN = 'mutation'
 SITE_COLUMN = 'site'
 WILDTYPE_COLUMN = 'wildtype'
 ANTIBODY_CONDITION_TO_NAME = {
@@ -56,7 +56,7 @@ RBD_SEQUENCE = ''.join(RBD_SITE_TO_AA[site] for site in RBD_SITES)
 
 # Literal types
 MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
-MODEL_TYPE_OPTIONS = Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
+MODEL_TYPE_OPTIONS = Literal['mutation', 'site', 'likelihood', 'embedding']
 TASK_TYPE_OPTIONS = Literal['classification', 'regression']
 SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
 ANTIBODY_GROUP_METHOD_OPTIONS = Literal['sequence', 'embedding', 'escape']

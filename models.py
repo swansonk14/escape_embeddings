@@ -15,11 +15,14 @@ from constants import (
 )
 
 
-class Model(ABC):
+class EscapeModel(ABC):
     """Abstract class for an escape prediction model."""
 
     def __init__(self, task_type: TASK_TYPE_OPTIONS) -> None:
-        """Initialize the model."""
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        """
         self.task_type = task_type
 
         if self.task_type not in {'classification', 'regression'}:
@@ -29,12 +32,14 @@ class Model(ABC):
 
     @abstractmethod
     def fit(self,
+            antibodies: Iterable[str],
             sites: Iterable[int],
             wildtypes: Iterable[str],
             mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'Model':
+            escapes: Iterable[float]) -> 'EscapeModel':
         """Fits the model on the training escape data.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -45,11 +50,13 @@ class Model(ABC):
 
     @abstractmethod
     def predict(self,
+                antibodies: Iterable[str],
                 sites: Iterable[int],
                 wildtypes: Iterable[str],
                 mutants: Iterable[str],) -> np.ndarray:
         """Makes escape predictions on the test data.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -58,23 +65,28 @@ class Model(ABC):
         pass
 
 
-class MutationModel(Model):
+class MutationModel(EscapeModel):
     """A model that predicts the average escape score of each wildtype-mutant amino acid substitution."""
 
     def __init__(self, task_type: TASK_TYPE_OPTIONS) -> None:
-        """Initialize the model."""
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        """
         super(MutationModel, self).__init__(task_type=task_type)
 
         self.wildtype_to_mutant_to_escape_list = defaultdict(lambda: defaultdict(list))
         self.wildtype_to_mutant_to_average_escape = defaultdict(lambda: defaultdict(float))
 
     def fit(self,
+            antibodies: Iterable[str],
             sites: Iterable[int],
             wildtypes: Iterable[str],
             mutants: Iterable[str],
             escapes: Iterable[float]) -> 'MutationModel':
         """Fit the model by computing the average escape score of each wildtype-mutation amino acid substitution.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -91,11 +103,13 @@ class MutationModel(Model):
         return self
 
     def predict(self,
+                antibodies: Iterable[str],
                 sites: Iterable[int],
                 wildtypes: Iterable[str],
                 mutants: Iterable[str],) -> np.ndarray:
         """Predict the average escape score of each wildtype-mutation amino acid substitution.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -107,23 +121,28 @@ class MutationModel(Model):
         ])
 
 
-class SiteModel(Model):
+class SiteModel(EscapeModel):
     """A model that predicts the average escape score at each antigen site."""
 
     def __init__(self, task_type: TASK_TYPE_OPTIONS) -> None:
-        """Initialize the model."""
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        """
         super(SiteModel, self).__init__(task_type=task_type)
 
         self.site_to_escape_list = defaultdict(list)
         self.site_to_average_escape = defaultdict(float)
 
     def fit(self,
+            antibodies: Iterable[str],
             sites: Iterable[int],
             wildtypes: Iterable[str],
             mutants: Iterable[str],
             escapes: Iterable[float]) -> 'SiteModel':
         """Fit the model by computing the average escape score at each antigen site.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -139,11 +158,13 @@ class SiteModel(Model):
         return self
 
     def predict(self,
+                antibodies: Iterable[str],
                 sites: Iterable[int],
                 wildtypes: Iterable[str],
                 mutants: Iterable[str],) -> np.ndarray:
         """Predict the average escape score at each antigen site.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -152,8 +173,56 @@ class SiteModel(Model):
         return np.array([self.site_to_average_escape[site] for site in sites])
 
 
-class EmbeddingModel(Model):
-    """A model that predicts escape scores by using antibody/antigen embeddings.."""
+class LikelihoodModel(EscapeModel):
+    """A model that predicts escape scores by using antigen mutant vs wildtype likelihood."""
+
+    def __init__(self, task_type: TASK_TYPE_OPTIONS, antigen_likelihoods: dict[str, float]) -> None:
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        :param antigen_likelihoods: A dictionary mapping from antigen name to mutant vs wildtype likelihood.
+        """
+        super(LikelihoodModel, self).__init__(task_type=task_type)
+
+        self.antigen_likelihoods = antigen_likelihoods
+
+    @abstractmethod
+    def fit(self,
+            antibodies: Iterable[str],
+            sites: Iterable[int],
+            wildtypes: Iterable[str],
+            mutants: Iterable[str],
+            escapes: Iterable[float]) -> 'EscapeModel':
+        """Fits the model on the training escape data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :param escapes: A list of escape scores for each mutation at each site.
+        :return: The fitted model.
+        """
+        return self
+
+    @abstractmethod
+    def predict(self,
+                antibodies: Iterable[str],
+                sites: Iterable[int],
+                wildtypes: Iterable[str],
+                mutants: Iterable[str],) -> np.ndarray:
+        """Makes escape predictions on the test data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :return: A numpy array of predicted escape scores.
+        """
+        return np.array([self.antigen_likelihoods[f'{site}_{mutant}'] for site, mutant in zip(sites, mutants)])
+
+
+class EmbeddingModel(EscapeModel):
+    """A model that predicts escape scores by using antibody/antigen embeddings."""
 
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
@@ -163,7 +232,11 @@ class EmbeddingModel(Model):
                  antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES) -> None:
-        """Initialize the model."""
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        TODO: document remaining parameters
+        """
         super(EmbeddingModel, self).__init__(task_type=task_type)
 
         self.embedding_granularity = embedding_granularity
@@ -177,12 +250,14 @@ class EmbeddingModel(Model):
 
     @abstractmethod
     def fit(self,
+            antibodies: Iterable[str],
             sites: Iterable[int],
             wildtypes: Iterable[str],
             mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'Model':
+            escapes: Iterable[float]) -> 'EscapeModel':
         """Fits the model on the training escape data.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.
@@ -193,11 +268,13 @@ class EmbeddingModel(Model):
 
     @abstractmethod
     def predict(self,
+                antibodies: Iterable[str],
                 sites: Iterable[int],
                 wildtypes: Iterable[str],
                 mutants: Iterable[str],) -> np.ndarray:
         """Makes escape predictions on the test data.
 
+        :param antibodies: A list of antibodies.
         :param sites: A list of mutated sites.
         :param wildtypes: A list of wildtype amino acids at each site.
         :param mutants: A list of mutant amino acids at each site.

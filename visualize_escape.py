@@ -11,7 +11,7 @@ from constants import (
     ANTIBODY_NAME_COLUMN,
     EPITOPE_GROUP_COLUMN,
     ESCAPE_COLUMN,
-    MUTATION_COLUMN,
+    MUTANT_COLUMN,
     RBD_SEQUENCE,
     SITE_COLUMN,
     WILDTYPE_COLUMN
@@ -115,11 +115,11 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -
     :param data: DataFrame containing escape data.
     :param save_path: Path to PDF/PNG file where escape score plot by amino acid change will be saved.
     """
-    escape = data.groupby([WILDTYPE_COLUMN, MUTATION_COLUMN])[
+    escape = data.groupby([WILDTYPE_COLUMN, MUTANT_COLUMN])[
         ESCAPE_COLUMN].mean().reset_index()  # mean escape per aa change
 
     wildtype = escape[WILDTYPE_COLUMN].unique()
-    mutation = escape[MUTATION_COLUMN].unique()
+    mutation = escape[MUTANT_COLUMN].unique()
 
     escape_grid = escape[ESCAPE_COLUMN].to_numpy().reshape(len(wildtype), len(mutation))
 
@@ -128,7 +128,7 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -
     fig.colorbar(im)
 
     ax.set_xticks(np.arange(len(mutation)), mutation)
-    ax.set_xlabel(MUTATION_COLUMN)
+    ax.set_xlabel(MUTANT_COLUMN)
     ax.set_yticks(np.arange(len(wildtype)), wildtype)
     ax.set_ylabel(WILDTYPE_COLUMN)
 
