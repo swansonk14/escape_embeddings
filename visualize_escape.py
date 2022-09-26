@@ -8,6 +8,7 @@ from tap import Tap
 
 from constants import (
     ANTIBODY_COLUMN,
+    ANTIBODY_CONDITION_TO_NAME,
     ANTIBODY_NAME_COLUMN,
     EPITOPE_GROUP_COLUMN,
     ESCAPE_COLUMN,
@@ -147,6 +148,9 @@ def visualize_escape(data_path: Path, antibody_path: Path, save_dir: Path) -> No
     # Load data
     data = pd.read_csv(data_path)
     antibody_data = pd.read_csv(antibody_path)
+
+    # Correct antibody names to match antibody sequence data and embeddings
+    data[ANTIBODY_COLUMN] = [ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody) for antibody in data[ANTIBODY_COLUMN]]
 
     # Handle outliers
     data.loc[data[ESCAPE_COLUMN] > 1, ESCAPE_COLUMN] = 1.0

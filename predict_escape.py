@@ -76,7 +76,7 @@ def split_data(
             antibody_name_to_group = dict(zip(antibody_data[ANTIBODY_NAME_COLUMN], antibody_data[EPITOPE_GROUP_COLUMN]))
             data = data.copy()
             data[EPITOPE_GROUP_COLUMN] = [
-                antibody_name_to_group[ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody)]
+                antibody_name_to_group[antibody]
                 for antibody in data[ANTIBODY_COLUMN]
             ]
 
@@ -163,7 +163,7 @@ def train_and_eval_escape(
         raise ValueError(f'Model type "{model_type}" is not supported.')
 
     if verbose:
-        print(f'Model = {model.__class__.__name__}')
+        print(f'Model = {model}')
 
     # Train model
     model.fit(
@@ -226,6 +226,7 @@ def predict_escape(
     # TODO: params docstring copied from args
 
     # Validate arguments
+    # TODO: improve error messages
     if model_granularity == 'per-antibody':
         assert split_type not in {'antibody', 'antibody_group'}
 
@@ -256,6 +257,9 @@ def predict_escape(
 
     # Load data
     data = pd.read_csv(data_path)
+
+    # Correct antibody names to match antibody sequence data and embeddings
+    data[ANTIBODY_COLUMN] = [ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody) for antibody in data[ANTIBODY_COLUMN]]
 
     # Load antigen likelihoods
     if antigen_likelihood_path is not None:
