@@ -1,15 +1,20 @@
 """Model classes for predicting escape scores."""
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
+from typing import Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm, trange
+
 
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
-    DEFAULT_HIDDEN_LAYER_SIZES,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_HIDDEN_LAYER_DIMS,
+    DEFAULT_NUM_EPOCHS,
     EMBEDDING_GRANULARITY_OPTIONS,
     HEAVY_CHAIN,
     LIGHT_CHAIN,
@@ -26,8 +31,6 @@ class EscapeModel(ABC):
 
         :param task_type: The type of task to perform, i.e., classification or regression.
         """
-        super(EscapeModel, self).__init__()
-
         self.task_type = task_type
 
         if self.task_type not in {'classification', 'regression'}:
@@ -37,11 +40,11 @@ class EscapeModel(ABC):
 
     @abstractmethod
     def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'EscapeModel':
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'EscapeModel':
         """Fits the model on the training escape data.
 
         :param antibodies: A list of antibodies.
@@ -55,10 +58,10 @@ class EscapeModel(ABC):
 
     @abstractmethod
     def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
         """Makes escape predictions on the test data.
 
         :param antibodies: A list of antibodies.
@@ -84,11 +87,11 @@ class MutationModel(EscapeModel):
         self.wildtype_to_mutant_to_average_escape = None
 
     def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'MutationModel':
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'MutationModel':
         """Fit the model by computing the average escape score of each wildtype-mutation amino acid substitution.
 
         :param antibodies: A list of antibodies.
@@ -113,10 +116,10 @@ class MutationModel(EscapeModel):
         return self
 
     def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
         """Predict the average escape score of each wildtype-mutation amino acid substitution.
 
         :param antibodies: A list of antibodies.
@@ -149,11 +152,11 @@ class SiteModel(EscapeModel):
         self.site_to_average_escape = None
 
     def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'SiteModel':
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'SiteModel':
         """Fit the model by computing the average escape score at each antigen site.
 
         :param antibodies: A list of antibodies.
@@ -175,10 +178,10 @@ class SiteModel(EscapeModel):
         return self
 
     def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
         """Predict the average escape score at each antigen site.
 
         :param antibodies: A list of antibodies.
@@ -208,11 +211,11 @@ class LikelihoodModel(EscapeModel):
         self.antigen_likelihoods = antigen_likelihoods
 
     def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'EscapeModel':
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'LikelihoodModel':
         """Fits the model on the training escape data.
 
         :param antibodies: A list of antibodies.
@@ -225,10 +228,10 @@ class LikelihoodModel(EscapeModel):
         return self
 
     def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
         """Makes escape predictions on the test data.
 
         :param antibodies: A list of antibodies.
@@ -244,7 +247,164 @@ class LikelihoodModel(EscapeModel):
         return self.__class__.__name__
 
 
-class EmbeddingModel(EscapeModel, nn.Module):
+class MutationDataset(Dataset):
+    """A data set for mutations containing antibodies, sites, and mutations."""
+
+    def __init__(self,
+                 antibodies: list[str],
+                 sites: list[int],
+                 mutants: list[str],
+                 escapes: Optional[list[float]] = None) -> None:
+        """Initialize the dataset.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param mutants: A list of mutant amino acids at each site.
+        :param escapes: A list of escape scores for each mutation at each site.
+        """
+        escapes = escapes if escapes is not None else [None] * len(antibodies)
+
+        assert len(antibodies) == len(sites) == len(mutants) == len(escapes)
+
+        self.antibodies = antibodies
+        self.sites = sites
+        self.mutants = mutants
+        self.escapes = escapes
+
+    def __len__(self) -> int:
+        """Get the length of the dataset."""
+        return len(self.antibodies)
+
+    def __getitem__(self, item: int | slice) -> tuple[str, int, str, Optional[float]] \
+                                                | list[tuple[str, int, str, Optional[float]]]:
+        """Get an item from the dataset
+
+        :param item: An int or slice to index into the dataset.
+        :return: An item or list of items from the dataset corresponding to the provided index or slice.
+                 Each item is a tuple of an antibody, a site, a mutation, and an escape score (if available).
+        """
+        if isinstance(item, int):
+            return self.antibodies[item], self.sites[item], self.mutants[item], self.escapes[item]
+
+        if isinstance(item, slice):
+            return list(zip(*[self.antibodies[item], self.sites[item], self.mutants[item], self.escapes[item]]))
+
+        raise NotImplementedError(f'__getitem__ with item type "{type(item)}" is not supported.')
+
+
+class MLP(nn.Module):
+    """A multilayer perceptron model."""
+
+    def __init__(self,
+                 input_dim: int,
+                 output_dim: int,
+                 hidden_layer_dims: tuple[int, ...]) -> None:
+        """Initialize the model.
+
+        :param input_dim: The dimensionality of the input to the model.
+        :param output_dim: The dimensionality of the input to the model.
+        :param hidden_layer_dims: The dimensionalities of the hidden layers.
+        """
+        super(MLP, self).__init__()
+
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.hidden_layer_dims = hidden_layer_dims
+
+        self.layer_dims = [self.input_dim] + list(self.hidden_layer_dims) + [self.output_dim]
+
+        # Create layers
+        self.layers = nn.ModuleList([
+            nn.Linear(self.layer_dims[i], self.layer_dims[i + 1])
+            for i in range(len(self.layer_dims) - 1)
+        ])
+
+        # Create activation function
+        self.activation = nn.ReLU()
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        """TODO: docstring"""
+        # Apply layers
+        for i, layer in enumerate(self.layers):
+            # TODO: dropout or batch norm?
+            x = layer(x)
+
+            if i != len(self.layers) - 1:
+                x = self.activation(x)
+
+        return x
+
+
+class Attention(nn.Module):
+    """An attention model."""
+
+    def __init__(self) -> None:
+        """Initialize the model."""
+        super(Attention, self).__init__()
+
+    def forward(self) -> torch.FloatTensor:
+        """TODO: docstring"""
+        raise NotImplementedError
+
+
+# TODO: better name
+class EmbeddingCoreModel(nn.Module):
+    """The core neural model that predicts escape scores by using antibody/antigen embeddings."""
+
+    def __init__(self,
+                 binarize: bool,
+                 antibody_attention: bool,
+                 input_dim: int,
+                 hidden_layer_dims: tuple[int, ...]) -> None:
+        """Initialize the model.
+
+        TODO: params docstring
+        """
+        super(EmbeddingCoreModel, self).__init__()
+
+        self.binarize = binarize
+        self.antibody_attention = antibody_attention
+        self.input_dim = input_dim
+        self.hidden_layer_dims = hidden_layer_dims
+
+        self.output_dim = 1
+
+        # Create attention model
+        if self.antibody_attention:
+            self.attention = Attention()  # TODO
+        else:
+            self.attention = None
+
+        # Create MLP model
+        self.mlp = MLP(
+            input_dim=self.input_dim,
+            output_dim=self.output_dim,
+            hidden_layer_dims=self.hidden_layer_dims
+        )
+
+        # Create sigmoid function
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        """TODO: docstring"""
+        # Apply attention
+        if self.antibody_attention:
+            x = self.attention(x)
+
+        # Apply MLP
+        x = self.mlp(x)
+
+        # Apply sigmoid if appropriate
+        if not self.training and self.binarize:
+            x = self.sigmoid(x)
+
+        # Squeeze output dimension
+        x = x.squeeze(dim=1)
+
+        return x
+
+
+class EmbeddingModel(EscapeModel):
     """A model that predicts escape scores by using antibody/antigen embeddings."""
 
     def __init__(self,
@@ -254,7 +414,10 @@ class EmbeddingModel(EscapeModel, nn.Module):
                  antigen_embedding_type: ANTIGEN_EMBEDDING_TYPE_OPTIONS,
                  antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
-                 hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES) -> None:
+                 hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+                 num_epochs: int = DEFAULT_NUM_EPOCHS,
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 model_seed: int = 0) -> None:
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
@@ -269,7 +432,10 @@ class EmbeddingModel(EscapeModel, nn.Module):
         self.antigen_embedding_type = antigen_embedding_type
         self.antibody_embeddings = antibody_embeddings
         self.antibody_embedding_type = antibody_embedding_type
-        self.hidden_layer_sizes = hidden_layer_sizes
+        self.hidden_layer_dims = hidden_layer_dims
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.model_seed = model_seed
 
         # Get embedding dimensionalities
         self.antigen_embedding_dim = next(iter(self.antigen_embeddings.values())).shape[-1]
@@ -299,40 +465,48 @@ class EmbeddingModel(EscapeModel, nn.Module):
         # Get wildtype embedding
         self.wildtype_embedding = self.antigen_embeddings['wildtype']
 
-        # Set up layer dimensionalities
+        # Set up input and output dims
         if self.antibody_embeddings is not None and self.antibody_embedding_type == 'concatenation':
             self.input_dim = self.antigen_embedding_dim + self.antibody_embedding_dim
+            # TODO: handle attention
         else:
             self.input_dim = self.antigen_embedding_dim
 
-        self.output_dim = 1
-        self.layer_dims = [self.input_dim] + list(hidden_layer_sizes) + [self.output_dim]
+        # Ensure PyTorch reproducibility
+        torch.manual_seed(self.model_seed)
+        torch.use_deterministic_algorithms(True)
 
-        # Create layers
-        self.layers = nn.ModuleList([
-            nn.Linear(self.layer_dims[i], self.layer_dims[i + 1])
-            for i in range(len(self.layer_dims) - 1)
-        ])
+        # Create core model
+        self.embedding_core_model = EmbeddingCoreModel(
+            binarize=self.binarize,
+            antibody_attention=self.antibody_embedding_type == 'attention',
+            input_dim=self.input_dim,
+            hidden_layer_dims=self.hidden_layer_dims
+        )
 
-        # Create activation function
-        self.activation = nn.ReLU()
+        # Create loss function
+        if self.task_type == 'classification':
+            self.loss_fn = nn.BCEWithLogitsLoss()
+        elif self.task_type == 'regression':
+            self.loss_fn = nn.MSELoss()
+        else:
+            raise ValueError(f'Task type "{self.task_type}" is not supported.')
 
-        # Create sigmoid function
-        self.sigmoid = nn.Sigmoid()
+        # Create optimizer
+        self.optimizer = torch.optim.Adam(self.embedding_core_model.parameters())
 
-        # TODO: create model and handle embedding granularity
+    def collate_embeddings_and_escape(self,
+                                      input_tuples: list[tuple[str, int, str, Optional[float]]]
+                                      ) -> tuple[torch.FloatTensor, Optional[torch.FloatTensor]]:
+        """Collate antibody and/or antigen embeddings and escape scores for input to the model.
 
-    def prepare_embeddings(self,
-                           antibodies: Iterable[str],
-                           sites: Iterable[int],
-                           mutants: Iterable[str]) -> torch.FloatTensor:
-        """Prepare antibody and/or antigen embeddings for input to the model.
-
-        :param antibodies: A list of antibodies.
-        :param sites: A list of mutated sites.
-        :param mutants: A list of mutant amino acids at each site.
-        :return: A FloatTensor containing the antibody and/or antigen embeddings for input to the model.
+        :param input_tuples: A list of tuples of antibody, site, mutation, and escape score (if available).
+        :return: A tuple with a FloatTensor containing the antibody and/or antigen embeddings
+                 and a FloatTensor of escape scores (if available).
         """
+        # Unpack list of tuples
+        antibodies, sites, mutants, escapes = zip(*input_tuples)
+
         # Get site indices
         site_indices = torch.LongTensor(sites) - RBD_START_SITE
 
@@ -371,14 +545,22 @@ class EmbeddingModel(EscapeModel, nn.Module):
         else:
             batch_embeddings = batch_antigen_embeddings
 
-        return batch_embeddings
+        # Convert escape scores to FloatTensor
+        if escapes[0] is not None:
+            escapes = torch.FloatTensor(escapes)
+
+            # Optionally binarize escape scores
+            if self.binarize:
+                escapes = (escapes > 0).float()
+
+        return batch_embeddings, escapes
 
     def fit(self,
-            antibodies: Iterable[str],
-            sites: Iterable[int],
-            wildtypes: Iterable[str],
-            mutants: Iterable[str],
-            escapes: Iterable[float]) -> 'EscapeModel':
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'EmbeddingModel':
         """Fits the model on the training escape data.
 
         :param antibodies: A list of antibodies.
@@ -388,19 +570,42 @@ class EmbeddingModel(EscapeModel, nn.Module):
         :param escapes: A list of escape scores for each mutation at each site.
         :return: The fitted model.
         """
-        batch_embeddings = self.prepare_embeddings(
+        # Create mutation dataset
+        dataset = MutationDataset(
             antibodies=antibodies,
             sites=sites,
-            mutants=mutants
+            mutants=mutants,
+            escapes=escapes
         )
-        preds = self.forward(batch_embeddings)
-        raise NotImplementedError  # TODO
+
+        # Create data loader
+        data_loader = DataLoader(
+            dataset=dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=0,  # TODO: enable parallel workers
+            collate_fn=self.collate_embeddings_and_escape
+        )
+
+        # Train
+        for _ in trange(self.num_epochs, desc='Epochs', leave=False):
+            for batch_embeddings, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+                self.embedding_core_model.zero_grad()
+
+                preds = self.embedding_core_model(batch_embeddings)
+
+                loss = self.loss_fn(preds, batch_escape)
+
+                loss.backward()
+                self.optimizer.step()
+
+        return self
 
     def predict(self,
-                antibodies: Iterable[str],
-                sites: Iterable[int],
-                wildtypes: Iterable[str],
-                mutants: Iterable[str]) -> np.ndarray:
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
         """Makes escape predictions on the test data.
 
         :param antibodies: A list of antibodies.
@@ -409,24 +614,34 @@ class EmbeddingModel(EscapeModel, nn.Module):
         :param mutants: A list of mutant amino acids at each site.
         :return: A numpy array of predicted escape scores.
         """
-        raise NotImplementedError  # TODO
+        # Create mutation dataset
+        dataset = MutationDataset(
+            antibodies=antibodies,
+            sites=sites,
+            mutants=mutants
+        )
 
-    def forward(self, batch_embeddings: torch.FloatTensor) -> torch.FloatTensor:
-        """TODO: docstring"""
-        # Apply layers
-        x = batch_embeddings
+        # Create data loader
+        data_loader = DataLoader(
+            dataset=dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=0,  # TODO: enable parallel workers
+            collate_fn=self.collate_embeddings_and_escape
+        )
 
-        for i, layer in enumerate(self.layers):
-            # TODO: dropout or batch norm?
-            x = layer(x)
+        # Predict
+        all_preds = []
 
-            if i != len(self.layers) - 1:
-                x = self.activation(x)
+        with torch.no_grad():
+            for batch_embeddings, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+                preds = self.embedding_core_model(batch_embeddings)
+                all_preds.append(preds.numpy())
 
-        # Apply sigmoid if appropriate
-        if not self.training and self.binarize:
-            output = self.sigmoid(x)
-        else:
-            output = x
+        all_preds = np.concatenate(all_preds)
 
-        return output
+        return all_preds
+
+    def __str__(self) -> str:
+        """Return a string representation of the model."""
+        return str(self.embedding_core_model)

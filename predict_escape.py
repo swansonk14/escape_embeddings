@@ -18,7 +18,9 @@ from constants import (
     ANTIBODY_NAME_COLUMN,
     ANTIBODY_GROUP_METHOD_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
-    DEFAULT_HIDDEN_LAYER_SIZES,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_HIDDEN_LAYER_DIMS,
+    DEFAULT_NUM_EPOCHS,
     EMBEDDING_GRANULARITY_OPTIONS,
     EPITOPE_GROUP_COLUMN,
     ESCAPE_COLUMN,
@@ -108,7 +110,9 @@ def train_and_eval_escape(
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
-        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
+        hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        num_epochs: int = DEFAULT_NUM_EPOCHS,
+        batch_size: int = DEFAULT_BATCH_SIZE,
         split_seed: int = 0,
         model_seed: int = 0,
         verbose: bool = True
@@ -149,7 +153,6 @@ def train_and_eval_escape(
     elif model_type == 'likelihood':
         model = LikelihoodModel(task_type=task_type, antigen_likelihoods=antigen_likelihoods)
     elif model_type == 'embedding':
-        # TODO: set model seed
         model = EmbeddingModel(
             task_type=task_type,
             embedding_granularity=embedding_granularity,
@@ -157,7 +160,10 @@ def train_and_eval_escape(
             antigen_embedding_type=antigen_embedding_type,
             antibody_embeddings=antibody_embeddings,
             antibody_embedding_type=antibody_embedding_type,
-            hidden_layer_sizes=hidden_layer_sizes
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            hidden_layer_dims=hidden_layer_dims,
+            model_seed=model_seed
         )
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
@@ -167,23 +173,23 @@ def train_and_eval_escape(
 
     # Train model
     model.fit(
-        antibodies=train_data[ANTIBODY_COLUMN],
-        sites=train_data[SITE_COLUMN],
-        wildtypes=train_data[WILDTYPE_COLUMN],
-        mutants=train_data[MUTANT_COLUMN],
-        escapes=train_data[ESCAPE_COLUMN]
+        antibodies=list(train_data[ANTIBODY_COLUMN]),
+        sites=list(train_data[SITE_COLUMN]),
+        wildtypes=list(train_data[WILDTYPE_COLUMN]),
+        mutants=list(train_data[MUTANT_COLUMN]),
+        escapes=list(train_data[ESCAPE_COLUMN])
     )
 
     # Make predictions
     test_preds = model.predict(
-        antibodies=test_data[ANTIBODY_COLUMN],
-        sites=test_data[SITE_COLUMN],
-        wildtypes=test_data[WILDTYPE_COLUMN],
-        mutants=test_data[MUTANT_COLUMN]
+        antibodies=list(test_data[ANTIBODY_COLUMN]),
+        sites=list(test_data[SITE_COLUMN]),
+        wildtypes=list(test_data[WILDTYPE_COLUMN]),
+        mutants=list(test_data[MUTANT_COLUMN])
     )
 
     # Binarize test escape scores
-    test_escape = test_data[ESCAPE_COLUMN]
+    test_escape = test_data[ESCAPE_COLUMN].to_numpy()
     binary_test_escape = (test_escape > 0).astype(int)
     unique_binary_labels = set(binary_test_escape)
 
@@ -218,7 +224,9 @@ def predict_escape(
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
         antibody_embeddings_path: Optional[Path] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
-        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
+        hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        num_epochs: int = DEFAULT_NUM_EPOCHS,
+        batch_size: int = DEFAULT_BATCH_SIZE,
         split_seed: int = 0,
         model_seed: int = 0
 ) -> None:
@@ -307,7 +315,9 @@ def predict_escape(
                 antigen_embedding_type=antigen_embedding_type,
                 antibody_embeddings=antibody_embeddings,
                 antibody_embedding_type=antibody_embedding_type,
-                hidden_layer_sizes=hidden_layer_sizes,
+                hidden_layer_dims=hidden_layer_dims,
+                num_epochs=num_epochs,
+                batch_size=batch_size,
                 split_seed=split_seed,
                 model_seed=model_seed,
                 verbose=False
@@ -364,7 +374,9 @@ def predict_escape(
             antigen_embedding_type=antigen_embedding_type,
             antibody_embeddings=antibody_embeddings,
             antibody_embedding_type=antibody_embedding_type,
-            hidden_layer_sizes=hidden_layer_sizes,
+            hidden_layer_dims=hidden_layer_dims,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
             split_seed=split_seed,
             model_seed=model_seed,
             verbose=True
@@ -410,8 +422,12 @@ if __name__ == '__main__':
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
         """Method of including the antibody embeddings with antigen embeddings."""
-        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES
+        hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS
         """The sizes of the hidden layers of the MLP model that will be trained."""
+        num_epochs: int = DEFAULT_NUM_EPOCHS
+        """The number of epochs for the embedding model."""
+        batch_size: int = DEFAULT_BATCH_SIZE
+        """The batch size for the embedding model."""
         split_seed: int = 0
         """The random seed for splitting the data."""
         model_seed: int = 0
