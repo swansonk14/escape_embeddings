@@ -166,7 +166,7 @@ def train_and_eval_escape(
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
-) -> tuple:  # TODO: specify return type
+) -> tuple:  # TODO: specify return type (results, model)
     """Train and evaluate a model on predicting escape."""
     # TODO: params docstring
 
@@ -269,7 +269,10 @@ def predict_escape(
         for antibody in tqdm(antibodies, desc='Antibodies'):
             antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
             results, model = train_and_eval_escape(
-                data=antibody_data
+                data=antibody_data,
+                split_type=split_type,
+                antibody_path=antibody_path,
+                antibody_group_method=antibody_group_method
             )
             all_results.append(results)
             all_models.append(model)
@@ -277,7 +280,10 @@ def predict_escape(
         # TODO: do something with results and models
     elif model_granularity == 'cross-antibody':
         results, model = train_and_eval_escape(
-            data=data
+            data=data,
+            split_type=split_type,
+            antibody_path=antibody_path,
+            antibody_group_method=antibody_group_method
         )
         # TODO: do something with results and model
     else:
