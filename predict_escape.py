@@ -1,7 +1,9 @@
 """Train a model to predict antigen escape using ESM2 embeddings."""
+from collections import defaultdict
 from pathlib import Path
 from typing import Literal, Optional
 
+import numpy as np
 import pandas as pd
 import torch
 from tap import Tap
@@ -12,17 +14,90 @@ from constants import (
 )
 
 
-def train_and_eval_escape(data: pd.DataFrame) -> None:
+class SiteModel:
+    """A Model that predicts the average escape score at each antigen site."""
+
+    def __init__(self) -> None:
+        """Initialize the model."""
+        self.site_to_escape_list = defaultdict(list)
+        self.site_to_average_escape = defaultdict(float)
+
+    def fit(self, sites: list[int], escapes: list[float], binarize: bool) -> 'SiteModel':
+        """Fit the model by computing the average escape score at each antigen site.
+
+        :param sites: A list of mutated sites.
+        :param escapes: A list of escape scores corresponding to the sites.
+        :param binarize: Whether to binarize the escape into 0 or 1 for non-zero values.
+        :return: Returns the fitted model.
+        """
+        for site, escape in zip(sites, escapes):
+            self.site_to_escape_list[site].append(int(escape > 0) if binarize else escape)
+
+        for site, escape_list in self.site_to_escape_list.items():
+            self.site_to_average_escape[site] = sum(escape_list) / len(escape_list)
+
+        return self
+
+    def predict(self, sites: list[int]) -> np.ndarray:
+        """Predict the average escape score at each antigen site.
+
+        :param sites: A list of sites for which to make a prediction.
+        :return: A numpy array containing average escape scores for each antigen site.
+        """
+        return np.array([self.site_to_average_escape[site] for site in sites])
+
+
+class MutationModel:
+    """A frequency baseline that predicts the average escape score of each wildtype-mutant amino acid substitution."""
+
+    def __init__(self) -> None:
+        """Initialize the model."""
+        self.wildtype_to_mutation_to_escape_list = defaultdict(lambda: defaultdict(list))
+        self.wildtype_to_mutation_to_average_escape = defaultdict(lambda: defaultdict(float))
+
+    def fit(self, wildtypes: list[str], mutations: list[str], escapes: list[float], binarize: bool) -> 'MutationModel':
+        """Fit the model by computing the average escape score of each wildtype-mutation amino acid substitution.
+
+        :param wildtypes: A list of wildtype amino acids.
+        :param mutations: A list of mutated amino acids.
+        :param escapes: A list of escape scores corresponding to the substitution of
+                        each wildtype amino acid for each mutant amino acid.
+        :param binarize: Whether to binarize the escape into 0 or 1 for non-zero values.
+        :return: Returns the fitted model.
+        """
+        for wildtype, mutation, escape in zip(wildtypes, mutations, escapes):
+            self.wildtype_to_mutation_to_escape_list[wildtype][mutation].append(int(escape > 0) if binarize else escape)
+
+        for wildtype, mutation_to_escape_list in self.wildtype_to_mutation_to_escape_list.items():
+            for mutation, escape_list in mutation_to_escape_list.items():
+                self.wildtype_to_mutation_to_average_escape[wildtype][mutation] = sum(escape_list) / len(escape_list)
+
+        return self
+
+    def predict(self, wildtypes: list[str], mutations: list[str]) -> np.ndarray:
+        """Predict the average escape score of each wildtype-mutation amino acid substitution.
+
+        :param wildtypes: A list of wildtype amino acids for which to make a prediction.
+        :param mutations: A list of mutated amino acids for which to make a prediction.
+        :return: A numpy array containing average escape scores for each wildtype-mutation amino acid substitution.
+        """
+        return np.array([
+            self.wildtype_to_mutation_to_average_escape[wildtype][mutation]
+            for wildtype, mutation in zip(wildtypes, mutations)
+        ])
+
+
+def train_and_eval_escape(data: pd.DataFrame) -> tuple:  # TODO: specify return type
     """Train and evaluate a model on predicting escape."""
     # TODO: params docstring
 
-    pass
+    # Split data
 
 
 def predict_escape(
         data_path: Path,
         save_dir: Path,
-        model_type: Literal['baseline_mutation', 'baseline_site', 'likelihood', 'embedding'],
+        model_type: Literal['mutation_model', 'site_model', 'likelihood', 'embedding'],
         model_granularity: Literal['per-antibody', 'cross-antibody'],
         task_type: Literal['classification', 'regression'],
         split_type: Literal['mutation', 'site', 'antibody', 'antibody_group'],
@@ -75,9 +150,17 @@ def predict_escape(
     # Load data
     data = pd.read_csv(data_path)
 
+    # Load antigen likelihoods
+    if antigen_likelihood_path is not None:
+        antigen_likelihoods: Optional[dict[str, float]] = torch.load(antigen_likelihood_path)
+
+        print(f'Loaded {len(antigen_likelihoods):,} antigen likelihoods')
+    else:
+        antigen_likelihoods = None
+
     # Load antigen embeddings
     if antigen_embeddings_path is not None:
-        antigen_embeddings: dict[str, ] = torch.load(antigen_embeddings_path)
+        antigen_embeddings: Optional[dict[str, torch.FloatTensor]] = torch.load(antigen_embeddings_path)
 
         print(f'Loaded {len(antigen_embeddings):,} antigen embeddings with dimensionality '
               f'{len(next(iter(antigen_embeddings.values())))}\n')
@@ -95,18 +178,23 @@ def predict_escape(
 
     # Train and evaluate escape depending on model granularity
     if model_granularity == 'per-antibody':
+        all_results, all_models = [], []
         antibodies = sorted(data[ANTIBODY_COLUMN].unique())
 
         for antibody in tqdm(antibodies, desc='Antibodies'):
             antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
-            train_and_eval_escape(
+            results, model = train_and_eval_escape(
                 data=antibody_data
             )
+            all_results.append(results)
+            all_models.append(model)
 
+        # TODO: do something with results and models
     elif model_granularity == 'cross-antibody':
-        train_and_eval_escape(
+        results, model = train_and_eval_escape(
             data=data
         )
+        # TODO: do something with results and model
     else:
         raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
 
@@ -119,7 +207,7 @@ if __name__ == '__main__':
         """Path to directory where results and models will be saved."""
         model_granularity: Literal['per-antibody', 'cross-antibody']
         """The granularity of the model, either one model per antibody or one model across all antibodies."""
-        model_type: Literal['baseline_mutation', 'baseline_site', 'likelihood', 'embedding']
+        model_type: Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
         """The type of model to train."""
         task_type: Literal['classification', 'regression']
         """The type of task to perform."""
