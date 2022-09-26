@@ -1,4 +1,6 @@
 """Contains constants used in the Python files in this repo."""
+from typing import Literal
+
 AA_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
 AA_ALPHABET_SET = set(AA_ALPHABET)
 HEAVY_CHAIN = 'heavy'
@@ -51,3 +53,16 @@ RBD_SITES = sorted(RBD_SITE_TO_AA)
 RBD_START_SITE = RBD_SITES[0]  # inclusive
 RBD_END_SITE = RBD_SITES[-1]  # inclusive
 RBD_SEQUENCE = ''.join(RBD_SITE_TO_AA[site] for site in RBD_SITES)
+
+# Literal types
+MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
+MODEL_TYPE_OPTIONS = Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
+TASK_TYPE_OPTIONS = Literal['classification', 'regression']
+SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
+ANTIBODY_GROUP_METHOD_OPTIONS = Literal['sequence', 'embedding', 'escape']
+EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
+ANTIGEN_EMBEDDING_TYPE_OPTIONS = Literal['mutant', 'difference']
+ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention']
+
+# Model constants
+DEFAULT_HIDDEN_LAYER_SIZES = (100, 100, 100)

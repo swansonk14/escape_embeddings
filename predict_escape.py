@@ -1,7 +1,6 @@
 """Train a model to predict antigen escape using ESM2 embeddings."""
-from collections import defaultdict
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -13,119 +12,73 @@ from tqdm import tqdm
 from constants import (
     ANTIBODY_COLUMN,
     ANTIBODY_CONDITION_TO_NAME,
+    ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIBODY_NAME_COLUMN,
+    ANTIBODY_GROUP_METHOD_OPTIONS,
+    ANTIGEN_EMBEDDING_TYPE_OPTIONS,
+    DEFAULT_HIDDEN_LAYER_SIZES,
+    EMBEDDING_GRANULARITY_OPTIONS,
     EPITOPE_GROUP_COLUMN,
-    SITE_COLUMN
+    ESCAPE_COLUMN,
+    MODEL_GRANULARITY_OPTIONS,
+    MODEL_TYPE_OPTIONS,
+    MUTATION_COLUMN,
+    RBD_SEQUENCE,
+    SITE_COLUMN,
+    SPLIT_TYPE_OPTIONS,
+    TASK_TYPE_OPTIONS,
+    WILDTYPE_COLUMN
 )
 
-# Literal types
-MODEL_TYPE_OPTIONS = Literal['mutation_model', 'site_model', 'likelihood', 'embedding']
-MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
-TASK_TYPE_OPTIONS = Literal['classification', 'regression']
-SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
-ANTIBODY_GROUP_METHOD_OPTIONS = Literal['sequence', 'embedding', 'escape']
-EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
-ANTIGEN_EMBEDDING_TYPE_OPTIONS = Literal['mutant', 'difference']
-ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention']
 
+def prune_wildtype_sequences(data: pd.DataFrame) -> pd.DataFrame:
+    """Prune wildtype sequences from a DataFrame so that there is only one wildtype seqeunce.
 
-class SiteModel:
-    """A Model that predicts the average escape score at each antigen site."""
+    :param data: DataFrame containing mutation escape data with multiple wildtype sequences.
+    :return: A new DataFrame containing mutation escape data with only one wildtype sequence
+    """
+    # Get mask of wildtype sequences in data
+    wildtype_mask = data[WILDTYPE_COLUMN] == data[MUTATION_COLUMN]
 
-    def __init__(self) -> None:
-        """Initialize the model."""
-        self.site_to_escape_list = defaultdict(list)
-        self.site_to_average_escape = defaultdict(float)
+    # Ensure one wildtype sequence for each RBD site
+    assert sum(wildtype_mask) == len(RBD_SEQUENCE)
 
-    def fit(self, sites: list[int], escapes: list[float], binarize: bool) -> 'SiteModel':
-        """Fit the model by computing the average escape score at each antigen site.
+    # Ensure all wildtype sequences have zero escape
+    assert all(data[wildtype_mask][ESCAPE_COLUMN] == 0)
 
-        :param sites: A list of mutated sites.
-        :param escapes: A list of escape scores corresponding to the sites.
-        :param binarize: Whether to binarize the escape into 0 or 1 for non-zero values.
-        :return: Returns the fitted model.
-        """
-        for site, escape in zip(sites, escapes):
-            self.site_to_escape_list[site].append(int(escape > 0) if binarize else escape)
+    # Keep only one copy of wildtype sequence
+    first_wildtype_idx = wildtype_mask.idxmax()
+    wildtype_mask.iloc[first_wildtype_idx] = False
+    data = data[~wildtype_mask]
 
-        for site, escape_list in self.site_to_escape_list.items():
-            self.site_to_average_escape[site] = sum(escape_list) / len(escape_list)
-
-        return self
-
-    def predict(self, sites: list[int]) -> np.ndarray:
-        """Predict the average escape score at each antigen site.
-
-        :param sites: A list of sites for which to make a prediction.
-        :return: A numpy array containing average escape scores for each antigen site.
-        """
-        return np.array([self.site_to_average_escape[site] for site in sites])
-
-
-class MutationModel:
-    """A frequency baseline that predicts the average escape score of each wildtype-mutant amino acid substitution."""
-
-    def __init__(self) -> None:
-        """Initialize the model."""
-        self.wildtype_to_mutation_to_escape_list = defaultdict(lambda: defaultdict(list))
-        self.wildtype_to_mutation_to_average_escape = defaultdict(lambda: defaultdict(float))
-
-    def fit(self, wildtypes: list[str], mutations: list[str], escapes: list[float], binarize: bool) -> 'MutationModel':
-        """Fit the model by computing the average escape score of each wildtype-mutation amino acid substitution.
-
-        :param wildtypes: A list of wildtype amino acids.
-        :param mutations: A list of mutated amino acids.
-        :param escapes: A list of escape scores corresponding to the substitution of
-                        each wildtype amino acid for each mutant amino acid.
-        :param binarize: Whether to binarize the escape into 0 or 1 for non-zero values.
-        :return: Returns the fitted model.
-        """
-        for wildtype, mutation, escape in zip(wildtypes, mutations, escapes):
-            self.wildtype_to_mutation_to_escape_list[wildtype][mutation].append(int(escape > 0) if binarize else escape)
-
-        for wildtype, mutation_to_escape_list in self.wildtype_to_mutation_to_escape_list.items():
-            for mutation, escape_list in mutation_to_escape_list.items():
-                self.wildtype_to_mutation_to_average_escape[wildtype][mutation] = sum(escape_list) / len(escape_list)
-
-        return self
-
-    def predict(self, wildtypes: list[str], mutations: list[str]) -> np.ndarray:
-        """Predict the average escape score of each wildtype-mutation amino acid substitution.
-
-        :param wildtypes: A list of wildtype amino acids for which to make a prediction.
-        :param mutations: A list of mutated amino acids for which to make a prediction.
-        :return: A numpy array containing average escape scores for each wildtype-mutation amino acid substitution.
-        """
-        return np.array([
-            self.wildtype_to_mutation_to_average_escape[wildtype][mutation]
-            for wildtype, mutation in zip(wildtypes, mutations)
-        ])
+    return data
 
 
 def split_data(
         data: pd.DataFrame,
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
+        split_seed: int = 0
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split data into train and test DataFrames."""
     # TODO: params docstring
 
     if split_type == 'mutation':
         indices = np.arange(len(data))
-        train_indices, test_indices = train_test_split(indices, random_state=0, test_size=0.2)
+        train_indices, test_indices = train_test_split(indices, random_state=split_seed, test_size=0.2)
         train_data = data.iloc[train_indices]
         test_data = data.iloc[test_indices]
 
     elif split_type == 'site':
         sites = sorted(data[SITE_COLUMN].unique())
-        train_sites, test_sites = train_test_split(sites, random_state=0, test_size=0.2)
+        train_sites, test_sites = train_test_split(sites, random_state=split_seed, test_size=0.2)
         train_data = data[data[SITE_COLUMN].isin(train_sites)]
         test_data = data[data[SITE_COLUMN].isin(test_sites)]
 
     elif split_type == 'antibody':
         antibodies = sorted(data[ANTIBODY_COLUMN].unique())
-        train_antibodies, test_antibodies = train_test_split(antibodies, random_state=0, test_size=0.2)
+        train_antibodies, test_antibodies = train_test_split(antibodies, random_state=split_seed, test_size=0.2)
         train_data = data[data[ANTIBODY_COLUMN].isin(train_antibodies)]
         test_data = data[data[ANTIBODY_COLUMN].isin(test_antibodies)]
 
@@ -149,7 +102,8 @@ def split_data(
 
             # Split based on antibody group
             antibody_groups = sorted(data[EPITOPE_GROUP_COLUMN].unique())
-            train_antibody_groups, test_antibody_groups = train_test_split(antibody_groups, random_state=0, test_size=0.2)
+            train_antibody_groups, test_antibody_groups = train_test_split(antibody_groups,
+                                                                           random_state=split_seed, test_size=0.2)
             train_data = data[data[ANTIBODY_COLUMN].isin(train_antibody_groups)]
             test_data = data[data[ANTIBODY_COLUMN].isin(test_antibody_groups)]
         else:
@@ -165,40 +119,52 @@ def train_and_eval_escape(
         data: pd.DataFrame,
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
+        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
+        split_seed: int = 0
 ) -> tuple:  # TODO: specify return type (results, model)
     """Train and evaluate a model on predicting escape."""
     # TODO: params docstring
+
+    print(f'Data size = {len(data)}:,')
+
+    # Prune wildtype sequences to leave only one
+    data = prune_wildtype_sequences(data=data)
+
+    print(f'Data size after pruning wildtype sequences = {len(data):,}')
 
     # Split data
     train_data, test_data = split_data(
         data=data,
         split_type=split_type,
         antibody_path=antibody_path,
-        antibody_group_method=antibody_group_method
+        antibody_group_method=antibody_group_method,
+        split_seed=split_seed
     )
+
+    print(f'Train size = {len(train_data):,}')
+    print(f'Test size = {len(test_data):,}')
+
+
 
 
 def predict_escape(
         data_path: Path,
         save_dir: Path,
-        model_type: MODEL_TYPE_OPTIONS,
         model_granularity: MODEL_GRANULARITY_OPTIONS,
+        model_type: MODEL_TYPE_OPTIONS,
         task_type: TASK_TYPE_OPTIONS,
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
-        hidden_layer_sizes: tuple[int, ...] = (100, 100, 100),
         antigen_likelihood_path: Optional[Path] = None,
         embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embeddings_path: Optional[Path] = None,
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
-        use_antibody_embeddings: bool = False,
         antibody_embeddings_path: Optional[Path] = None,
         antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
+        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES,
         split_seed: int = 0,
-        model_seed: int = 0,
-        verbose: bool = False
+        model_seed: int = 0
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
     # TODO: params docstring copied from args
@@ -222,12 +188,12 @@ def predict_escape(
                and embedding_granularity is not None
     else:
         assert antigen_embeddings_path is None and antigen_embedding_type is None \
-               and embedding_granularity is None and not use_antibody_embeddings
+               and embedding_granularity is None and antibody_embeddings_path is not None
 
-    if use_antibody_embeddings:
-        assert antibody_embeddings_path is not None and antibody_embedding_method is not None
+    if antibody_embeddings_path is not None:
+        assert antibody_embedding_method is not None
     else:
-        assert antibody_embeddings_path is None and antibody_embedding_method is None
+        assert antibody_embedding_method is None
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -272,7 +238,8 @@ def predict_escape(
                 data=antibody_data,
                 split_type=split_type,
                 antibody_path=antibody_path,
-                antibody_group_method=antibody_group_method
+                antibody_group_method=antibody_group_method,
+                split_seed=split_seed
             )
             all_results.append(results)
             all_models.append(model)
@@ -283,7 +250,8 @@ def predict_escape(
             data=data,
             split_type=split_type,
             antibody_path=antibody_path,
-            antibody_group_method=antibody_group_method
+            antibody_group_method=antibody_group_method,
+            split_seed=split_seed
         )
         # TODO: do something with results and model
     else:
@@ -308,8 +276,6 @@ if __name__ == '__main__':
         """Path to a CSV file containing antibody sequences and groups."""
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
         """The method of grouping antibodies for the antibody_group split type."""
-        hidden_layer_sizes: tuple[int, ...] = (100, 100, 100)
-        """The sizes of the hidden layers of the MLP model that will be trained."""
         antigen_likelihood_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
         embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
@@ -318,18 +284,16 @@ if __name__ == '__main__':
         """Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding."""
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None
         """The type of antigen embedding. mutant: The mutant embedding. difference: mutant - wildtype embedding."""
-        use_antibody_embeddings: bool = False
-        """Whether to use antibody embeddings in addition to antigen embeddings."""
         antibody_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
         antibody_embedding_method: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None
         """Method of including the antibody embeddings with antigen embeddings."""
+        hidden_layer_sizes: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_SIZES
+        """The sizes of the hidden layers of the MLP model that will be trained."""
         split_seed: int = 0
         """The random seed for splitting the data."""
         model_seed: int = 0
         """The random seed for the model weight initialization."""
-        verbose: bool = False
-        """Whether to print additional debug information."""
 
 
     predict_escape(**Args().parse_args().as_dict())
