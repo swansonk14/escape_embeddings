@@ -219,7 +219,7 @@ def predict_escape(
         task_type: TASK_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
-        antigen_likelihood_path: Optional[Path] = None,
+        antigen_likelihoods_path: Optional[Path] = None,
         antigen_embeddings_path: Optional[Path] = None,
         antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None,
@@ -246,9 +246,9 @@ def predict_escape(
         assert antibody_path is None and antibody_group_method is None
 
     if model_type == 'likelihood':
-        assert antigen_likelihood_path is not None and task_type == 'regression'
+        assert antigen_likelihoods_path is not None and task_type == 'regression'
     else:
-        assert antigen_likelihood_path is None
+        assert antigen_likelihoods_path is None
 
     if model_type == 'embedding':
         assert antigen_embeddings_path is not None and antigen_embedding_type is not None \
@@ -275,8 +275,8 @@ def predict_escape(
     data[ANTIBODY_COLUMN] = [ANTIBODY_CONDITION_TO_NAME.get(antibody, antibody) for antibody in data[ANTIBODY_COLUMN]]
 
     # Load antigen likelihoods
-    if antigen_likelihood_path is not None:
-        antigen_likelihoods: Optional[dict[str, float]] = torch.load(antigen_likelihood_path)
+    if antigen_likelihoods_path is not None:
+        antigen_likelihoods: Optional[dict[str, float]] = torch.load(antigen_likelihoods_path)
 
         print(f'Loaded {len(antigen_likelihoods):,} antigen likelihoods')
     else:
@@ -397,7 +397,7 @@ if __name__ == '__main__':
         data_path: Path
         """Path to CSV file containing antibody escape data."""
         save_dir: Path
-        """Path to directory where results and models will be saved."""
+        """Path to directory where results will be saved."""
         model_granularity: MODEL_GRANULARITY_OPTIONS
         """The granularity of the model, either one model per antibody or one model across all antibodies."""
         model_type: MODEL_TYPE_OPTIONS
@@ -410,7 +410,7 @@ if __name__ == '__main__':
         """Path to a CSV file containing antibody sequences and groups."""
         antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
         """The method of grouping antibodies for the antibody_group split type."""
-        antigen_likelihood_path: Optional[Path] = None
+        antigen_likelihoods_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
         antigen_embeddings_path: Optional[Path] = None
         """Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding."""
