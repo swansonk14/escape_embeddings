@@ -20,7 +20,8 @@ from constants import (
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
-    DEFAULT_NUM_EPOCHS,
+    DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY,
+    DEFAULT_NUM_EPOCHS_PER_ANTIBODY,
     EMBEDDING_GRANULARITY_OPTIONS,
     EPITOPE_GROUP_COLUMN,
     ESCAPE_COLUMN,
@@ -32,7 +33,7 @@ from constants import (
     TASK_TYPE_OPTIONS,
     WILDTYPE_COLUMN
 )
-from models import EmbeddingModel, EscapeModel, LikelihoodModel, MutationModel, SiteModel
+from models import EmbeddingModel, LikelihoodModel, MutationModel, SiteModel
 
 
 def split_data(
@@ -112,7 +113,7 @@ def train_and_eval_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
-        num_epochs: int = DEFAULT_NUM_EPOCHS,
+        num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
         split_seed: int = 0,
         model_seed: int = 0,
@@ -227,7 +228,7 @@ def predict_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
-        num_epochs: int = DEFAULT_NUM_EPOCHS,
+        num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
         split_seed: int = 0,
         model_seed: int = 0
@@ -255,7 +256,7 @@ def predict_escape(
                and antigen_embedding_granularity is not None
     else:
         assert antigen_embeddings_path is None and antigen_embedding_type is None \
-               and antigen_embedding_granularity is None and antibody_embeddings_path is None
+               and antigen_embedding_granularity is None and antibody_embeddings_path is None and num_epochs is None
 
     if antibody_embeddings_path is not None:
         assert antibody_embedding_type is not None and antibody_embedding_granularity is not None
@@ -264,6 +265,14 @@ def predict_escape(
 
     if antibody_embedding_granularity == 'residue':
         assert antibody_embedding_type == 'attention'
+
+    if model_type == 'embedding' and num_epochs is None:
+        if model_granularity == 'per-antibody':
+            num_epochs = DEFAULT_NUM_EPOCHS_PER_ANTIBODY
+        elif model_granularity == 'cross-antibody':
+            num_epochs = DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY
+        else:
+            raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
 
     # Create save directory
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -426,8 +435,8 @@ if __name__ == '__main__':
         """Method of including the antibody embeddings with antigen embeddings."""
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS
         """The sizes of the hidden layers of the MLP model that will be trained."""
-        num_epochs: int = DEFAULT_NUM_EPOCHS
-        """The number of epochs for the embedding model."""
+        num_epochs: Optional[int] = None
+        """The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity."""
         batch_size: int = DEFAULT_BATCH_SIZE
         """The batch size for the embedding model."""
         split_seed: int = 0

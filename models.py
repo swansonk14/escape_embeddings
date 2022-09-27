@@ -14,7 +14,6 @@ from constants import (
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
-    DEFAULT_NUM_EPOCHS,
     EMBEDDING_GRANULARITY_OPTIONS,
     HEAVY_CHAIN,
     LIGHT_CHAIN,
@@ -401,6 +400,7 @@ class EmbeddingModel(EscapeModel):
 
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
+                 num_epochs: int,
                  antigen_embeddings: dict[str, torch.FloatTensor],
                  antigen_embedding_granularity: EMBEDDING_GRANULARITY_OPTIONS,
                  antigen_embedding_type: ANTIGEN_EMBEDDING_TYPE_OPTIONS,
@@ -408,7 +408,6 @@ class EmbeddingModel(EscapeModel):
                  antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
-                 num_epochs: int = DEFAULT_NUM_EPOCHS,
                  batch_size: int = DEFAULT_BATCH_SIZE,
                  model_seed: int = 0) -> None:
         """Initialize the model.
@@ -420,6 +419,7 @@ class EmbeddingModel(EscapeModel):
 
         assert (antibody_embeddings is None) == (antibody_embedding_type is None)
 
+        self.num_epochs = num_epochs
         self.antigen_embeddings = antigen_embeddings
         self.antigen_embedding_granularity = antigen_embedding_granularity
         self.antigen_embedding_type = antigen_embedding_type
@@ -427,7 +427,6 @@ class EmbeddingModel(EscapeModel):
         self.antibody_embedding_granularity = antibody_embedding_granularity
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_dims = hidden_layer_dims
-        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.model_seed = model_seed
 
@@ -583,8 +582,6 @@ class EmbeddingModel(EscapeModel):
             collate_fn=self.collate_embeddings_and_escape,
             generator=generator
         )
-
-        # TODO: monitor loss
 
         # Train
         for _ in trange(self.num_epochs, desc='Epochs', leave=False):
