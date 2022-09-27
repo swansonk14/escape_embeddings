@@ -108,9 +108,6 @@ def run_experiments(
         )
         experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name),]
 
-        if skip_existing:
-            experiment_args.append('--skip_existing')
-
     print(f'Number of experiments = {len(all_experiments_args):,}')
 
     # Save experiment commands
@@ -125,7 +122,12 @@ def run_experiments(
             for i in range(0, len(args) - 2, 2):
                 f.write(f'    {args[i]} {args[i + 1]} \\\n')
 
-            f.write(f'    {args[-2]} {args[-1]} \n\n')
+            f.write(f'    {args[-2]} {args[-1]}')
+
+            if skip_existing:
+                f.write(' \\\n    --skip_existing')
+
+            f.write('\n\n')
 
 
 if __name__ == '__main__':

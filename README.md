@@ -116,5 +116,6 @@ python setup_experiments.py \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --experiment_save_dir results \
-    --bash_save_path run_experiments.sh
+    --bash_save_path run_experiments.sh \
+    --skip_existing
 ```

@@ -451,6 +451,7 @@ if __name__ == '__main__':
 
     # Skip existing
     if args.skip_existing and args.save_dir.exists():
+        print('skip_existing is True and save_dir already exists. Exiting...')
         exit()
 
     # Save args
