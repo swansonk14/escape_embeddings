@@ -104,7 +104,7 @@ python generate_likelihood_ratios.py \
 ```
 
 
-### Set Up Experiments
+## Set Up Experiments
 
 Set up a bash script with all the experiments to run.
 
@@ -118,4 +118,10 @@ python setup_experiments.py \
     --experiment_save_dir results \
     --bash_save_path run_experiments.sh \
     --skip_existing
+```
+
+## Run Experiments
+
+```bash
+bash run_experiments.sh
 ```

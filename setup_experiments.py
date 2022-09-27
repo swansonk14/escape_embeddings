@@ -68,17 +68,17 @@ def run_experiments(
                         for experiment_args in experiments_args:
                             experiment_args += ['--antigen_embeddings_path', antigen_embeddings_path]
 
-                        new_experiments_args = []
+                        antigen_experiment_args = []
                         for experiment_args in experiments_args:
                             for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                                 for antigen_embedding_type in get_args(ANTIGEN_EMBEDDING_TYPE_OPTIONS):
-                                    new_experiments_args.append(experiment_args + [
+                                    antigen_experiment_args.append(experiment_args + [
                                         '--antigen_embedding_granularity', antigen_embedding_granularity,
                                         '--antigen_embedding_type', antigen_embedding_type
                                     ])
-                        experiments_args = new_experiments_args
+                        experiments_args = antigen_experiment_args
 
-                        new_experiments_args = []
+                        antibody_experiments_args = []
                         for experiment_args in experiments_args:
                             for antibody_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                                 for antibody_embedding_type in get_args(ANTIBODY_EMBEDDING_TYPE_OPTIONS):
@@ -90,12 +90,12 @@ def run_experiments(
                                     if antibody_embedding_type == 'attention':
                                         continue
 
-                                    new_experiments_args.append(experiment_args + [
+                                    antibody_experiments_args.append(experiment_args + [
                                         '--antibody_embedding_granularity', antibody_embedding_granularity,
                                         '--antibody_embedding_type', antibody_embedding_type,
                                         '--antibody_embeddings_path', antibody_embeddings_path
                                     ])
-                        experiments_args = new_experiments_args
+                        experiments_args += antibody_experiments_args
 
                     all_experiments_args += experiments_args
 
