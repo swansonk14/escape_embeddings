@@ -1,10 +1,8 @@
 """Run all experiments of predicting escape with different models and settings."""
 from pathlib import Path
-from subprocess import run
 from typing import get_args
 
 from tap import Tap
-from tqdm import tqdm
 
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,

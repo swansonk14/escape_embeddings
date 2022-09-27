@@ -134,3 +134,12 @@ python combine_results.py \
     --results_dir results \
     --save_path results/all_results.csv
 ```
+
+
+## Analyze Results
+
+```bash
+python analyze_results.py \
+    --results_path results/all_results.csv \
+    --save_dir plots
+```
