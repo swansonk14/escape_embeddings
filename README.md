@@ -125,3 +125,12 @@ python setup_experiments.py \
 ```bash
 bash run_experiments.sh
 ```
+
+
+## Combine Results
+
+```bash
+python combine_results.py \
+    --results_dir results \
+    --save_path results/all_results.csv
+```
