@@ -38,7 +38,7 @@ def run_experiments(
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
                         continue
 
-                    if model_type == 'likelihood' and task_type == 'classification':
+                    if model_type == 'likelihood' and task_type == 'regression':
                         continue
 
                     experiment_args = [

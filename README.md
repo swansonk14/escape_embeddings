@@ -141,5 +141,5 @@ python combine_results.py \
 ```bash
 python analyze_results.py \
     --results_path results/all_results.csv \
-    --save_dir plots
+    --save_dir plots/results
 ```

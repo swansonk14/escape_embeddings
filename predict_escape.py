@@ -248,7 +248,7 @@ def predict_escape(
         assert antibody_path is None and antibody_group_method is None
 
     if model_type == 'likelihood':
-        assert antigen_likelihoods_path is not None and task_type == 'regression'
+        assert antigen_likelihoods_path is not None and task_type == 'classification'
     else:
         assert antigen_likelihoods_path is None
 

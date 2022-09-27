@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import get_args
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tap import Tap
@@ -13,6 +14,16 @@ from constants import (
     TASK_TYPE_OPTIONS
 )
 
+MODEL_ORDER = [
+    'Mutation', 'Site', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Res Mut', 'Antigen Res Diff',
+    'Antigen Seq Mut Concat Antibody', 'Antigen Seq Diff Concat Antibody',
+    'Antigen Res Mut Concat Antibody', 'Antigen Res Diff Concat Antibody',
+]
+MODEL_NAME_TO_ORDER = {
+    model_name: index
+    for index, model_name in enumerate(MODEL_ORDER)
+}
+
 
 def row_to_model_name(row: pd.Series) -> str:
     """Convert a row from the results DataFrame to a model name.
@@ -20,18 +31,18 @@ def row_to_model_name(row: pd.Series) -> str:
     :param row: A row from the results DataFrame.
     :return: The model name of the row.
     """
-    model_name = row.model_type.title()
-
     if row.model_type == 'embedding':
-        breakpoint()
+        model_name = 'Antigen'
+
         if row.antigen_embedding_granularity == 'sequence':
-            model_name += ' Seq'
+            model_name += '\nSeq'
         elif row.antigen_embedding_granularity == 'residue':
-            model_name += ' Res'
+            model_name += '\nRes'
         else:
+            breakpoint()
             raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
 
-        if not np.isnan(row.antigen_embedding_type):
+        if isinstance(row.antigen_embedding_type, str):
             if row.antigen_embedding_type == 'mutant':
                 model_name += ' Mut'
             elif row.antigen_embedding_type == 'difference':
@@ -39,17 +50,21 @@ def row_to_model_name(row: pd.Series) -> str:
             else:
                 raise ValueError(f'Antigen embedding type "{row.antigen_embedding_type}" is not supported.')
 
-        if row.antibody_emedding_type == 'concatenation':
-            model_name += ' Concat Antibody'
-        elif row.antibody_emedding_type == 'attention':
-            model_name += ' Attn Antibody'
-        else:
-            raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
+        if isinstance(row.antibody_embedding_type, str):
+            if row.antibody_embedding_type == 'concatenation':
+                model_name += '\nConcat\nAntibody'
+            elif row.antibody_embedding_type == 'attention':
+                model_name += '\nAttn\nAntibody'
+            else:
+                raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
+    else:
+        model_name = row.model_type.title()
 
     return model_name
 
 
 # TODO: need to update for attention and antibody embedding granularity and other antibody group methods
+# TODO: likelihood for classification as well
 def analyze_results(results_path: Path, save_dir: Path) -> None:
     """Analyze the results of multiple experiments.
 
@@ -77,11 +92,31 @@ def analyze_results(results_path: Path, save_dir: Path) -> None:
                         & (results['task_type'] == task_type)
                     ]
 
-                    # Get model names and results
-                    model_names = [row_to_model_name(row) for _, row in experiment_results.iterrows()]
-                    metric_values = experiment_results[metric]
+                    # Remove likelihood if regression since it isn't trained in that capacity
+                    if task_type == 'regression':
+                        experiment_results = experiment_results[experiment_results['model_type'] != 'likelihood']
 
-                    breakpoint()
+                    # Get model names and results
+                    model_names = np.array([row_to_model_name(row) for _, row in experiment_results.iterrows()])
+                    metric_values = experiment_results[metric].to_numpy()
+
+                    # Sort results in canonical order
+                    argsort = sorted(range(len(model_names)),
+                                     key=lambda index: MODEL_NAME_TO_ORDER[model_names[index].replace('\n', ' ')])
+                    model_names = model_names[argsort]
+                    metric_values = metric_values[argsort]
+
+                    # Plot results
+                    plt.clf()
+                    plt.bar(model_names, metric_values)
+                    plt.xticks(fontsize=5)
+                    plt.ylabel(f'{"Mean " if model_granularity == "per-antibody" else ""}{metric}')
+                    plt.title(f'{split_type.title()} Split {model_granularity.title()} {task_type.title()} {metric}')
+
+                    # Save plot
+                    experiment_save_dir = save_dir / split_type / model_granularity / task_type / f'{metric}.pdf'
+                    experiment_save_dir.parent.mkdir(parents=True, exist_ok=True)
+                    plt.savefig(experiment_save_dir, bbox_inches='tight')
 
 
 if __name__ == '__main__':
