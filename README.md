@@ -102,3 +102,19 @@ python generate_likelihood_ratios.py \
     --esm_model esm2_t33_650M_UR50D \
     --save_path embeddings/antigen_likelihood_ratios.pt
 ```
+
+
+### Set Up Experiments
+
+Set up a bash script with all the experiments to run.
+
+```bash
+python setup_experiments.py \
+    --data_path data/data.csv \
+    --antibody_path data/antibodies.csv \
+    --antigen_likelihoods_path embeddings/antigen_likelihood_ratios.pt \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --experiment_save_dir results \
+    --bash_save_path run_experiments.sh
+```

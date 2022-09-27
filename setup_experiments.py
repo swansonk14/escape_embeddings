@@ -32,8 +32,8 @@ def run_experiments(
     """
     # Set up experiment args
     all_experiments_args = []
-    for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
-        for model_type in get_args(MODEL_TYPE_OPTIONS):
+    for model_type in get_args(MODEL_TYPE_OPTIONS):
+        for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
             for task_type in get_args(TASK_TYPE_OPTIONS):
                 for split_type in get_args(SPLIT_TYPE_OPTIONS):
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
@@ -43,8 +43,8 @@ def run_experiments(
                         continue
 
                     experiment_args = [
-                        '--model_granularity', model_granularity,
                         '--model_type', model_type,
+                        '--model_granularity', model_granularity,
                         '--task_type', task_type,
                         '--split_type', split_type
                     ]
@@ -103,6 +103,7 @@ def run_experiments(
         experiment_name = ','.join(
             f'{experiment_args[i].lstrip("-")}={experiment_args[i + 1]}'
             for i in range(0, len(experiment_args), 2)
+            if 'path' not in experiment_args[i]
         )
         experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name)]
 

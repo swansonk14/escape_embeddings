@@ -1,6 +1,5 @@
 """Model classes for predicting escape scores."""
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -575,11 +574,14 @@ class EmbeddingModel(EscapeModel):
         )
 
         # Create data loader
+        generator = torch.Generator()
+        generator.manual_seed(0)
         data_loader = DataLoader(
             dataset=dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            collate_fn=self.collate_embeddings_and_escape
+            collate_fn=self.collate_embeddings_and_escape,
+            generator=generator
         )
 
         # TODO: monitor loss
