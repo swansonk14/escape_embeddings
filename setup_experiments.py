@@ -58,6 +58,7 @@ def run_experiments(
                                 '--antibody_group_method', antibody_group_method, '--antibody_path', antibody_path
                             ]
                             for antibody_group_method in get_args(ANTIBODY_GROUP_METHOD_OPTIONS)
+                            if antibody_group_method == 'escape'  # TODO: remove this
                         ]
                     else:
                         experiments_args = [experiment_args]
@@ -84,6 +85,10 @@ def run_experiments(
                                             and antibody_embedding_type == 'concatenation':
                                         continue
 
+                                    # TODO: remove this
+                                    if antibody_embedding_type == 'attention':
+                                        continue
+
                                     new_experiments_args.append(experiment_args + [
                                         '--antibody_embedding_granularity', antibody_embedding_granularity,
                                         '--antibody_embedding_type', antibody_embedding_type,
@@ -100,6 +105,8 @@ def run_experiments(
             for i in range(0, len(experiment_args), 2)
         )
         experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name)]
+
+    print(f'Number of experiments = {len(all_experiments_args):,}')
 
     # Save experiment commands
     with open(bash_save_path, 'w') as f:
