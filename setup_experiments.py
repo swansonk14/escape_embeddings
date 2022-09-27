@@ -47,6 +47,9 @@ def run_experiments(
                         '--split_type', split_type
                     ]
 
+                    if split_type == 'antibody_group':
+                        experiment_args += ['--antibody_path', antibody_path]
+
                     if model_type == 'likelihood':
                         experiment_args += ['--antigen_likelihoods_path', antigen_likelihoods_path]
 
@@ -60,10 +63,9 @@ def run_experiments(
                                     '--antigen_embedding_granularity', antigen_embedding_granularity,
                                     '--antigen_embedding_type', antigen_embedding_type
                                 ])
-                        experiments_args = [experiment_args] + antigen_experiment_args
 
                         antibody_experiments_args = []
-                        for experiment_args in experiments_args:
+                        for experiment_args in antigen_experiment_args:
                             for antibody_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                                 for antibody_embedding_type in get_args(ANTIBODY_EMBEDDING_TYPE_OPTIONS):
                                     if antibody_embedding_granularity == 'residue' \
@@ -79,7 +81,7 @@ def run_experiments(
                                         '--antibody_embedding_type', antibody_embedding_type,
                                         '--antibody_embeddings_path', antibody_embeddings_path
                                     ])
-                        experiments_args += antibody_experiments_args
+                        experiments_args = antigen_experiment_args + antibody_experiments_args
                     else:
                         experiments_args = [experiment_args]
 
