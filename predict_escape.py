@@ -335,7 +335,7 @@ def predict_escape(
                 batch_size=batch_size,
                 split_seed=split_seed,
                 model_seed=model_seed,
-                verbose=True  # TODO: change to False
+                verbose=False
             )
             all_results.append(results)
 
@@ -443,9 +443,23 @@ if __name__ == '__main__':
         """The random seed for splitting the data."""
         model_seed: int = 0
         """The random seed for the model weight initialization."""
+        skip_existing: bool = False
+        """Whether to skip running the code if the save_dir already exists."""
 
+    # Parse args
     args = Args().parse_args()
+
+    # Skip existing
+    if args.skip_existing and args.save_dir.exists():
+        exit()
+
+    # Save args
     args.save_dir.mkdir(parents=True, exist_ok=True)
     args.save(args.save_dir / 'args.json')
 
-    predict_escape(**args.as_dict())
+    # Prepare args dict
+    args_dict = args.as_dict()
+    del args_dict['skip_existing']
+
+    # Predict escape
+    predict_escape(**args_dict)
