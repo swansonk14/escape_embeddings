@@ -25,7 +25,8 @@ def run_experiments(
         antigen_embeddings_path: str,
         antibody_embeddings_path: str,
         experiment_save_dir: Path,
-        bash_save_path: Path
+        bash_save_path: Path,
+        skip_existing: bool
 ) -> None:
     """Run all experiments of predicting escape with different models and settings.
     TODO: params docstring
@@ -105,7 +106,10 @@ def run_experiments(
             for i in range(0, len(experiment_args), 2)
             if 'path' not in experiment_args[i]
         )
-        experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name)]
+        experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name),]
+
+        if skip_existing:
+            experiment_args.append('--skip_existing')
 
     print(f'Number of experiments = {len(all_experiments_args):,}')
 
@@ -140,5 +144,7 @@ if __name__ == '__main__':
         """Path to directory where all the experiment results will be saved."""
         bash_save_path: Path
         """Path to bash file where experiment commands will be saved."""
+        skip_existing: bool = False
+        """Whether to skip running the code if the save_dir already exists."""
 
     run_experiments(**Args().parse_args().as_dict())
