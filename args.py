@@ -6,7 +6,6 @@ from tap import Tap
 
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
-    ANTIBODY_GROUP_METHOD_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
@@ -33,8 +32,6 @@ class PredictEscapeArgs(Tap):
     """The type of data split."""
     antibody_path: Optional[Path] = None
     """Path to a CSV file containing antibody sequences and groups."""
-    antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None
-    """The method of grouping antibodies for the antibody_group split type."""
     antigen_likelihoods_path: Optional[Path] = None
     """Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood."""
     antigen_embeddings_path: Optional[Path] = None

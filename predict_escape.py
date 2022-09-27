@@ -45,20 +45,20 @@ def split_data(
     """Split data into train and test DataFrames."""
     # TODO: params docstring
     if split_type == 'mutation':
-        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(data))[fold]
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(data))[fold]
         train_data = data.iloc[train_indices]
         test_data = data.iloc[test_indices]
 
     elif split_type == 'site':
         sites = np.array(sorted(data[SITE_COLUMN].unique()))
-        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(sites))[fold]
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(sites))[fold]
         train_sites, test_sites = sites[train_indices], sites[test_indices]
         train_data = data[data[SITE_COLUMN].isin(train_sites)]
         test_data = data[data[SITE_COLUMN].isin(test_sites)]
 
     elif split_type == 'antibody':
         antibodies = np.array(sorted(data[ANTIBODY_COLUMN].unique()))
-        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(antibodies))[fold]
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(antibodies))[fold]
         train_antibodies, test_antibodies = antibodies[train_indices], antibodies[test_indices]
         train_data = data[data[ANTIBODY_COLUMN].isin(train_antibodies)]
         test_data = data[data[ANTIBODY_COLUMN].isin(test_antibodies)]
@@ -77,7 +77,7 @@ def split_data(
 
         # Split based on antibody group
         antibody_groups = np.array(sorted(data[EPITOPE_GROUP_COLUMN].unique()))
-        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(antibody_groups))[fold]
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(antibody_groups))[fold]
         train_antibody_groups, test_antibody_groups = antibody_groups[train_indices], antibody_groups[test_indices]
         train_data = data[data[EPITOPE_GROUP_COLUMN].isin(train_antibody_groups)]
         test_data = data[data[EPITOPE_GROUP_COLUMN].isin(test_antibody_groups)]
