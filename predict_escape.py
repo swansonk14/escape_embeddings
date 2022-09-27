@@ -231,7 +231,8 @@ def predict_escape(
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
         split_seed: int = 0,
-        model_seed: int = 0
+        model_seed: int = 0,
+        verbose: bool = False
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
     # TODO: params docstring copied from args
@@ -335,7 +336,7 @@ def predict_escape(
                 batch_size=batch_size,
                 split_seed=split_seed,
                 model_seed=model_seed,
-                verbose=False
+                verbose=verbose
             )
             all_results.append(results)
 
@@ -445,6 +446,8 @@ if __name__ == '__main__':
         """The random seed for the model weight initialization."""
         skip_existing: bool = False
         """Whether to skip running the code if the save_dir already exists."""
+        verbose: bool = False
+        """Whether to print additional debug information."""
 
     # Parse args
     args = Args().parse_args()
