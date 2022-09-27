@@ -55,10 +55,6 @@ class PredictEscapeArgs(Tap):
     """The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity."""
     batch_size: int = DEFAULT_BATCH_SIZE
     """The batch size for the embedding model."""
-    split_seed: int = 0
-    """The random seed for splitting the data."""
-    model_seed: int = 0
-    """The random seed for the model weight initialization."""
     skip_existing: bool = False
     """Whether to skip running the code if the save_dir already exists."""
     verbose: bool = False

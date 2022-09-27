@@ -6,7 +6,6 @@ from tap import Tap
 
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
-    ANTIBODY_GROUP_METHOD_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     EMBEDDING_GRANULARITY_OPTIONS,
     MODEL_GRANULARITY_OPTIONS,
@@ -51,30 +50,17 @@ def run_experiments(
                     if model_type == 'likelihood':
                         experiment_args += ['--antigen_likelihoods_path', antigen_likelihoods_path]
 
-                    if split_type == 'antibody_group':
-                        experiments_args = [
-                            experiment_args + [
-                                '--antibody_group_method', antibody_group_method, '--antibody_path', antibody_path
-                            ]
-                            for antibody_group_method in get_args(ANTIBODY_GROUP_METHOD_OPTIONS)
-                            if antibody_group_method == 'escape'  # TODO: remove this
-                        ]
-                    else:
-                        experiments_args = [experiment_args]
-
                     if model_type == 'embedding':
-                        for experiment_args in experiments_args:
-                            experiment_args += ['--antigen_embeddings_path', antigen_embeddings_path]
+                        experiment_args += ['--antigen_embeddings_path', antigen_embeddings_path]
 
                         antigen_experiment_args = []
-                        for experiment_args in experiments_args:
-                            for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
-                                for antigen_embedding_type in get_args(ANTIGEN_EMBEDDING_TYPE_OPTIONS):
-                                    antigen_experiment_args.append(experiment_args + [
-                                        '--antigen_embedding_granularity', antigen_embedding_granularity,
-                                        '--antigen_embedding_type', antigen_embedding_type
-                                    ])
-                        experiments_args = antigen_experiment_args
+                        for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
+                            for antigen_embedding_type in get_args(ANTIGEN_EMBEDDING_TYPE_OPTIONS):
+                                antigen_experiment_args.append(experiment_args + [
+                                    '--antigen_embedding_granularity', antigen_embedding_granularity,
+                                    '--antigen_embedding_type', antigen_embedding_type
+                                ])
+                        experiments_args = [experiment_args] + antigen_experiment_args
 
                         antibody_experiments_args = []
                         for experiment_args in experiments_args:
@@ -94,6 +80,8 @@ def run_experiments(
                                         '--antibody_embeddings_path', antibody_embeddings_path
                                     ])
                         experiments_args += antibody_experiments_args
+                    else:
+                        experiments_args = [experiment_args]
 
                     all_experiments_args += experiments_args
 

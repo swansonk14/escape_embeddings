@@ -59,7 +59,6 @@ MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
 MODEL_TYPE_OPTIONS = Literal['mutation', 'site', 'likelihood', 'embedding']
 TASK_TYPE_OPTIONS = Literal['classification', 'regression']
 SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
-ANTIBODY_GROUP_METHOD_OPTIONS = Literal['sequence', 'embedding', 'escape']
 EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
 ANTIGEN_EMBEDDING_TYPE_OPTIONS = Literal['mutant', 'difference']
 ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention']
@@ -72,3 +71,6 @@ DEFAULT_NUM_EPOCHS_PER_ANTIBODY = 50
 
 # Metrics
 METRICS = ['ROC-AUC', 'PRC-AUC', 'R2', 'MSE']
+
+# Experiment constants
+NUM_FOLDS = 5

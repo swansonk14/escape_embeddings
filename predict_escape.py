@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import average_precision_score, roc_auc_score, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from tqdm import tqdm
 
 from args import PredictEscapeArgs
@@ -16,7 +16,6 @@ from constants import (
     ANTIBODY_CONDITION_TO_NAME,
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIBODY_NAME_COLUMN,
-    ANTIBODY_GROUP_METHOD_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
@@ -28,6 +27,7 @@ from constants import (
     MODEL_GRANULARITY_OPTIONS,
     MODEL_TYPE_OPTIONS,
     MUTANT_COLUMN,
+    NUM_FOLDS,
     SITE_COLUMN,
     SPLIT_TYPE_OPTIONS,
     TASK_TYPE_OPTIONS,
@@ -38,60 +38,49 @@ from models import EmbeddingModel, LikelihoodModel, MutationModel, SiteModel
 
 def split_data(
         data: pd.DataFrame,
+        fold: int,
         split_type: SPLIT_TYPE_OPTIONS,
-        antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
-        split_seed: int = 0
+        antibody_path: Optional[Path] = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split data into train and test DataFrames."""
     # TODO: params docstring
-
     if split_type == 'mutation':
-        indices = np.arange(len(data))
-        train_indices, test_indices = train_test_split(indices, random_state=split_seed, test_size=0.2)
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(data))[fold]
         train_data = data.iloc[train_indices]
         test_data = data.iloc[test_indices]
 
     elif split_type == 'site':
-        sites = sorted(data[SITE_COLUMN].unique())
-        train_sites, test_sites = train_test_split(sites, random_state=split_seed, test_size=0.2)
+        sites = np.array(sorted(data[SITE_COLUMN].unique()))
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(sites))[fold]
+        train_sites, test_sites = sites[train_indices], sites[test_indices]
         train_data = data[data[SITE_COLUMN].isin(train_sites)]
         test_data = data[data[SITE_COLUMN].isin(test_sites)]
 
     elif split_type == 'antibody':
-        antibodies = sorted(data[ANTIBODY_COLUMN].unique())
-        train_antibodies, test_antibodies = train_test_split(antibodies, random_state=split_seed, test_size=0.2)
+        antibodies = np.array(sorted(data[ANTIBODY_COLUMN].unique()))
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(antibodies))[fold]
+        train_antibodies, test_antibodies = antibodies[train_indices], antibodies[test_indices]
         train_data = data[data[ANTIBODY_COLUMN].isin(train_antibodies)]
         test_data = data[data[ANTIBODY_COLUMN].isin(test_antibodies)]
 
     elif split_type == 'antibody_group':
-        if antibody_group_method == 'sequence':
-            raise NotImplementedError
+        # Load antibody data
+        antibody_data = pd.read_csv(antibody_path)
 
-        elif antibody_group_method == 'embedding':
-            raise NotImplementedError
+        # Get antibody groups
+        antibody_name_to_group = dict(zip(antibody_data[ANTIBODY_NAME_COLUMN], antibody_data[EPITOPE_GROUP_COLUMN]))
+        data = data.copy()
+        data[EPITOPE_GROUP_COLUMN] = [
+            antibody_name_to_group[antibody]
+            for antibody in data[ANTIBODY_COLUMN]
+        ]
 
-        elif antibody_group_method == 'escape':
-            # Load antibody data
-            antibody_data = pd.read_csv(antibody_path)
-
-            # Get antibody groups
-            antibody_name_to_group = dict(zip(antibody_data[ANTIBODY_NAME_COLUMN], antibody_data[EPITOPE_GROUP_COLUMN]))
-            data = data.copy()
-            data[EPITOPE_GROUP_COLUMN] = [
-                antibody_name_to_group[antibody]
-                for antibody in data[ANTIBODY_COLUMN]
-            ]
-
-            # Split based on antibody group
-            antibody_groups = sorted(data[EPITOPE_GROUP_COLUMN].unique())
-            train_antibody_groups, test_antibody_groups = train_test_split(antibody_groups,
-                                                                           random_state=split_seed, test_size=0.2)
-            train_data = data[data[EPITOPE_GROUP_COLUMN].isin(train_antibody_groups)]
-            test_data = data[data[EPITOPE_GROUP_COLUMN].isin(test_antibody_groups)]
-        else:
-            raise ValueError(f'Antibody group method "{antibody_group_method}" is not supported.')
-
+        # Split based on antibody group
+        antibody_groups = np.array(sorted(data[EPITOPE_GROUP_COLUMN].unique()))
+        train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, random_state=0).split(antibody_groups))[fold]
+        train_antibody_groups, test_antibody_groups = antibody_groups[train_indices], antibody_groups[test_indices]
+        train_data = data[data[EPITOPE_GROUP_COLUMN].isin(train_antibody_groups)]
+        test_data = data[data[EPITOPE_GROUP_COLUMN].isin(test_antibody_groups)]
     else:
         raise ValueError(f'Split type "{split_type}" is not supported.')
 
@@ -100,11 +89,11 @@ def split_data(
 
 def train_and_eval_escape(
         data: pd.DataFrame,
+        fold: int,
         model_type: MODEL_TYPE_OPTIONS,
         task_type: TASK_TYPE_OPTIONS,
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         antigen_likelihoods: Optional[dict[str, float]] = None,
         antigen_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
         antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
@@ -115,8 +104,6 @@ def train_and_eval_escape(
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
-        split_seed: int = 0,
-        model_seed: int = 0,
         verbose: bool = True
 ) -> dict[str, Optional[float]]:
     """Train and evaluate a model on predicting escape.
@@ -136,10 +123,9 @@ def train_and_eval_escape(
     # Split data
     train_data, test_data = split_data(
         data=data,
+        fold=fold,
         split_type=split_type,
-        antibody_path=antibody_path,
-        antibody_group_method=antibody_group_method,
-        split_seed=split_seed
+        antibody_path=antibody_path
     )
 
     if verbose:
@@ -164,8 +150,7 @@ def train_and_eval_escape(
             antibody_embedding_type=antibody_embedding_type,
             num_epochs=num_epochs,
             batch_size=batch_size,
-            hidden_layer_dims=hidden_layer_dims,
-            model_seed=model_seed
+            hidden_layer_dims=hidden_layer_dims
         )
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
@@ -219,7 +204,6 @@ def predict_escape(
         split_type: SPLIT_TYPE_OPTIONS,
         task_type: TASK_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
-        antibody_group_method: Optional[ANTIBODY_GROUP_METHOD_OPTIONS] = None,
         antigen_likelihoods_path: Optional[Path] = None,
         antigen_embeddings_path: Optional[Path] = None,
         antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
@@ -230,8 +214,6 @@ def predict_escape(
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
-        split_seed: int = 0,
-        model_seed: int = 0,
         verbose: bool = False
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
@@ -243,9 +225,9 @@ def predict_escape(
         assert split_type not in {'antibody', 'antibody_group'}
 
     if split_type == 'antibody_group':
-        assert antibody_path is not None and antibody_group_method is not None
+        assert antibody_path is not None
     else:
-        assert antibody_path is None and antibody_group_method is None
+        assert antibody_path is None
 
     if model_type == 'likelihood':
         assert antigen_likelihoods_path is not None and task_type == 'classification'
@@ -310,76 +292,28 @@ def predict_escape(
     else:
         antibody_embeddings = None
 
-    # Train and evaluate escape depending on model granularity
+    # Get unique antibodies
+    unique_antibodies = sorted(set(data[ANTIBODY_COLUMN].unique()))
+
+    # Set up folds and antibodies depending on model granularity
     if model_granularity == 'per-antibody':
-        all_results = []
-        antibodies = sorted(data[ANTIBODY_COLUMN].unique())
-
-        for antibody in tqdm(antibodies, desc='Antibodies'):
-            antibody_data = data[data[ANTIBODY_COLUMN] == antibody]
-            results = train_and_eval_escape(
-                data=antibody_data,
-                model_type=model_type,
-                task_type=task_type,
-                split_type=split_type,
-                antibody_path=antibody_path,
-                antibody_group_method=antibody_group_method,
-                antigen_likelihoods=antigen_likelihoods,
-                antigen_embeddings=antigen_embeddings,
-                antigen_embedding_granularity=antigen_embedding_granularity,
-                antigen_embedding_type=antigen_embedding_type,
-                antibody_embeddings=antibody_embeddings,
-                antibody_embedding_granularity=antibody_embedding_granularity,
-                antibody_embedding_type=antibody_embedding_type,
-                hidden_layer_dims=hidden_layer_dims,
-                num_epochs=num_epochs,
-                batch_size=batch_size,
-                split_seed=split_seed,
-                model_seed=model_seed,
-                verbose=verbose
-            )
-            all_results.append(results)
-
-            # Create antibody save dir
-            antibody_save_dir = save_dir / antibody
-            antibody_save_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save results
-            with open(antibody_save_dir / 'results.json', 'w') as f:
-                json.dump(results, f, indent=4, sort_keys=True)
-
-        # Compute summary results
-        metrics = all_results[0].keys()
-        all_results = {
-            metric: [result[metric] for result in all_results]
-            for metric in metrics
-        }
-        summary_results = {
-            metric: {
-                'mean': float(np.nanmean(all_results[metric])),
-                'std': float(np.nanstd(all_results[metric])),
-                'num': len(all_results[metric]),
-                'num_nan': int(np.isnan(all_results[metric]).sum())
-            }
-            for metric in metrics
-        }
-
-        for metric, values in summary_results.items():
-            print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f} ' +
-                  (f'({values["num_nan"]:,} / {values["num"]:,} NaN)' if values["num_nan"] > 0 else ''))
-
-        # Save summary results
-        with open(save_dir / 'summary_results.json', 'w') as f:
-            json.dump(summary_results, f, indent=4, sort_keys=True)
-
+        folds = [0]
+        antibody_sets = [{antibody} for antibody in unique_antibodies]
     elif model_granularity == 'cross-antibody':
-        results = train_and_eval_escape(
-            data=data,
+        folds = list(range(NUM_FOLDS))
+        antibody_sets = [unique_antibodies]
+    else:
+        raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
+
+    # Train and evaluate escape
+    results = [
+        train_and_eval_escape(
+            data=data[data[ANTIBODY_COLUMN].isin(antibody_set)],
+            fold=fold,
             model_type=model_type,
             task_type=task_type,
             split_type=split_type,
             antibody_path=antibody_path,
-            antibody_group_method=antibody_group_method,
             antigen_likelihoods=antigen_likelihoods,
             antigen_embeddings=antigen_embeddings,
             antigen_embedding_granularity=antigen_embedding_granularity,
@@ -390,16 +324,37 @@ def predict_escape(
             hidden_layer_dims=hidden_layer_dims,
             num_epochs=num_epochs,
             batch_size=batch_size,
-            split_seed=split_seed,
-            model_seed=model_seed,
-            verbose=True
+            verbose=verbose
         )
+        for fold in tqdm(folds, desc='Folds')
+        for antibody_set in tqdm(antibody_sets, desc='Antibodies', leave=False)
+    ]
 
-        # Save results
-        with open(save_dir / 'results.json', 'w') as f:
-            json.dump(results, f, indent=4, sort_keys=True)
-    else:
-        raise ValueError(f'Model granularity "{model_granularity}" is not supported.')
+    # Compute summary results
+    metrics = sorted(results[0].keys())
+    all_results = {
+        metric: [result[metric] for result in results]
+        for metric in metrics
+    }
+    summary_results = {
+        metric: {
+            'mean': float(np.nanmean(all_results[metric])),
+            'std': float(np.nanstd(all_results[metric])),
+            'num': len(all_results[metric]),
+            'num_nan': int(np.isnan(all_results[metric]).sum()),
+            'values': all_results[metric],
+            'items': unique_antibodies if model_granularity == 'per-antibody' else [f'fold_{fold}' for fold in folds]
+        }
+        for metric in metrics
+    }
+
+    for metric, values in summary_results.items():
+        print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f} ' +
+              (f'({values["num_nan"]:,} / {values["num"]:,} NaN)' if values["num_nan"] > 0 else ''))
+
+    # Save summary results
+    with open(save_dir / 'results.json', 'w') as f:
+        json.dump(summary_results, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':

@@ -408,8 +408,7 @@ class EmbeddingModel(EscapeModel):
                  antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
-                 batch_size: int = DEFAULT_BATCH_SIZE,
-                 model_seed: int = 0) -> None:
+                 batch_size: int = DEFAULT_BATCH_SIZE) -> None:
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
@@ -428,7 +427,6 @@ class EmbeddingModel(EscapeModel):
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_dims = hidden_layer_dims
         self.batch_size = batch_size
-        self.model_seed = model_seed
 
         # Get embedding dimensionalities
         self.antigen_embedding_dim = next(iter(self.antigen_embeddings.values())).shape[-1]
@@ -466,7 +464,7 @@ class EmbeddingModel(EscapeModel):
             self.input_dim = self.antigen_embedding_dim
 
         # Ensure PyTorch reproducibility
-        torch.manual_seed(self.model_seed)
+        torch.manual_seed(0)
         torch.use_deterministic_algorithms(True)
 
         # Create core model

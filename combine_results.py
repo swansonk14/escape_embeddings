@@ -39,7 +39,6 @@ def combine_results(results_dir: Path, save_path: Path) -> None:
             'model_type': args.model_type,
             'task_type': args.task_type,
             'split_type': args.split_type,
-            'antibody_group_method': args.antibody_group_method,
             'antigen_embedding_granularity': args.antigen_embedding_granularity,
             'antigen_embedding_type': args.antigen_embedding_type,
             'antibody_embedding_granularity': args.antibody_embedding_granularity,
