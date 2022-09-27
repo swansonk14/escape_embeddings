@@ -13,7 +13,7 @@ def analyze_results(results_dir: Path, save_path: Path) -> None:
     # Get all results
     results_dicts = []
     results_dirs = sorted(path for path in results_dir.iterdir() if path.is_dir())
-    for experiment_results_dir in sorted(results_dir.iterdir()):
+    for experiment_results_dir in results_dirs:
         # Get args from experiment
         args = PredictEscapeArgs()
         args.load(experiment_results_dir / 'args.json')
@@ -24,7 +24,7 @@ def analyze_results(results_dir: Path, save_path: Path) -> None:
                 summary_results = json.load(f)
 
             results = {
-                metric: values[metric]['mean']
+                metric: values['mean']
                 for metric, values in summary_results.items()
             }
         elif args.model_granularity == 'cross-antibody':
