@@ -100,13 +100,8 @@ def run_experiments(
                     all_experiments_args += experiments_args
 
     # Add save directory
-    for experiment_args in all_experiments_args:
-        experiment_name = ','.join(
-            f'{experiment_args[i].lstrip("-")}={experiment_args[i + 1]}'
-            for i in range(0, len(experiment_args), 2)
-            if 'path' not in experiment_args[i]
-        )
-        experiment_args += ['--save_dir', str(experiment_save_dir / experiment_name),]
+    for i, experiment_args in enumerate(all_experiments_args):
+        experiment_args += ['--save_dir', str(experiment_save_dir / str(i))]
 
     print(f'Number of experiments = {len(all_experiments_args):,}')
 
