@@ -98,17 +98,19 @@ def analyze_results(results_path: Path, save_dir: Path) -> None:
 
                     # Get model names and results
                     model_names = np.array([row_to_model_name(row) for _, row in experiment_results.iterrows()])
-                    metric_values = experiment_results[metric].to_numpy()
+                    mean_values = experiment_results[f'{metric}_mean'].to_numpy()
+                    std_values = experiment_results[f'{metric}_std'].to_numpy()
 
                     # Sort results in canonical order
                     argsort = sorted(range(len(model_names)),
                                      key=lambda index: MODEL_NAME_TO_ORDER[model_names[index].replace('\n', ' ')])
                     model_names = model_names[argsort]
-                    metric_values = metric_values[argsort]
+                    mean_values = mean_values[argsort]
+                    std_values = std_values[argsort]
 
                     # Plot results
                     plt.clf()
-                    plt.bar(model_names, metric_values)
+                    plt.bar(model_names, mean_values, alpha=0.5, yerr=std_values, capsize=5)
                     plt.xticks(fontsize=5)
                     plt.ylabel(f'{"Mean " if model_granularity == "per-antibody" else ""}{metric}')
                     plt.title(f'{split_type.title()} Split {model_granularity.title()} {task_type.title()} {metric}')

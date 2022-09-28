@@ -19,19 +19,8 @@ def combine_results(results_dir: Path, save_path: Path) -> None:
         args.load(experiment_results_dir / 'args.json')
 
         # Get results from experiment
-        if args.model_granularity == 'per-antibody':
-            with open(experiment_results_dir / 'summary_results.json') as f:
-                summary_results = json.load(f)
-
-            results = {
-                metric: values['mean']
-                for metric, values in summary_results.items()
-            }
-        elif args.model_granularity == 'cross-antibody':
-            with open(experiment_results_dir / 'results.json') as f:
-                results = json.load(f)
-        else:
-            raise ValueError(f'Model granularity "{args.model_granularity}" is not supported.')
+        with open(experiment_results_dir / 'results.json') as f:
+            results = json.load(f)
 
         # Combine experiment results with args
         results_dicts.append({
@@ -43,7 +32,11 @@ def combine_results(results_dir: Path, save_path: Path) -> None:
             'antigen_embedding_type': args.antigen_embedding_type,
             'antibody_embedding_granularity': args.antibody_embedding_granularity,
             'antibody_embedding_type': args.antibody_embedding_type,
-            **results
+            **{
+                f'{metric}_{value_type}': value_type_to_values[value_type]
+                for metric, value_type_to_values in results.items()
+                for value_type in ['mean', 'std', 'num', 'num_nan']
+            }
         })
 
     # Combine all results
