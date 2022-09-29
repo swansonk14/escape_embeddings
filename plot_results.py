@@ -122,7 +122,7 @@ def get_means_and_stds(results: pd.DataFrame,
     return model_names, mean_values, std_values
 
 
-def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
+def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
     """Plot the results of multiple experiments with a single plot across splits.
 
     :param results: A DataFrame containing all the experiment results.
@@ -185,12 +185,13 @@ def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Opt
             plt.legend(fontsize=6)
 
             # Save plot
-            experiment_save_dir = save_dir / task_type / f'{metric}.pdf'
-            experiment_save_dir.parent.mkdir(parents=True, exist_ok=True)
-            plt.savefig(experiment_save_dir, bbox_inches='tight')
+            experiment_save_path = save_dir / task_type / \
+                                  f'cross-split-{task_type}-{metric}{"-limited" if models is not None else ""}.pdf'
+            experiment_save_path.parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(experiment_save_path, bbox_inches='tight')
 
 
-def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
+def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
     """Plot the results of multiple experiments with a separate plot for each split type.
 
     :param results: A DataFrame containing all the experiment results.
@@ -228,9 +229,11 @@ def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optiona
                               f'{task_type.title()} {metric}')
 
                     # Save plot
-                    experiment_save_dir = save_dir / split_type / model_granularity / task_type / f'{metric}.pdf'
-                    experiment_save_dir.parent.mkdir(parents=True, exist_ok=True)
-                    plt.savefig(experiment_save_dir, bbox_inches='tight')
+                    experiment_save_path = save_dir / split_type / model_granularity / task_type / \
+                                          f'by-split-{split_type}-{model_granularity}-{task_type}-{metric}' \
+                                          f'{"-limited" if models is not None else ""}.pdf'
+                    experiment_save_path.parent.mkdir(parents=True, exist_ok=True)
+                    plt.savefig(experiment_save_path, bbox_inches='tight')
 
 
 # TODO: need to update for attention and antibody embedding granularity
@@ -244,26 +247,26 @@ def plot_results(results_path: Path, save_dir: Path) -> None:
     results = pd.read_csv(results_path)
 
     # Plot results across splits
-    plot_results_across_split(
+    plot_results_cross_split(
         results=results,
-        save_dir=save_dir / 'across_splits'
+        save_dir=save_dir / 'cross_split'
     )
 
     # Plot results across splits with limited models
-    plot_results_across_split(
+    plot_results_cross_split(
         results=results,
-        save_dir=save_dir / 'across_splits_limited',
+        save_dir=save_dir / 'cross_split_limited',
         models=LIMITED_MODELS
     )
 
     # Plot results by split
-    plot_results_by_split(
+    plot_results_per_split(
         results=results,
         save_dir=save_dir / 'by_split'
     )
 
     # Plot results by split with limited models
-    plot_results_by_split(
+    plot_results_per_split(
         results=results,
         save_dir=save_dir / 'by_split_limited',
         models=LIMITED_MODELS
