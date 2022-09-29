@@ -16,12 +16,12 @@ from constants import (
 
 LIMITED_MODELS = [
     'Mutation', 'Site', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff',
-    'Antigen Res Mut', 'Antigen Res Mut Concat Antibody'
+    'Antigen Res Mut', 'Antigen Res Mut + Antibody'
 ]
 MODEL_ORDER = [
     'Mutation', 'Site', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Res Mut', 'Antigen Res Diff',
-    'Antigen Seq Mut Concat Antibody', 'Antigen Seq Diff Concat Antibody',
-    'Antigen Res Mut Concat Antibody', 'Antigen Res Diff Concat Antibody',
+    'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
+    'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
 ]
 MODEL_NAME_TO_ORDER = {
     model_name: index
@@ -29,19 +29,22 @@ MODEL_NAME_TO_ORDER = {
 }
 
 
-def row_to_model_name(row: pd.Series) -> str:
+def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
     """Convert a row from the results DataFrame to a model name.
 
     :param row: A row from the results DataFrame.
+    :param newlines: Whether to add newlines in the model names.
     :return: The model name of the row.
     """
+    whitespace = '\n' if newlines else ' '
+
     if row.model_type == 'embedding':
         model_name = 'Antigen'
 
         if row.antigen_embedding_granularity == 'sequence':
-            model_name += '\nSeq'
+            model_name += f'{whitespace}Seq'
         elif row.antigen_embedding_granularity == 'residue':
-            model_name += '\nRes'
+            model_name += f'{whitespace}Res'
         else:
             breakpoint()
             raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
@@ -56,9 +59,9 @@ def row_to_model_name(row: pd.Series) -> str:
 
         if isinstance(row.antibody_embedding_type, str):
             if row.antibody_embedding_type == 'concatenation':
-                model_name += '\nConcat\nAntibody'
+                model_name += f' +{whitespace}Antibody'
             elif row.antibody_embedding_type == 'attention':
-                model_name += '\nAttn\nAntibody'
+                model_name += f' Att{whitespace}Antibody'
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
     else:
@@ -72,7 +75,8 @@ def get_means_and_stds(results: pd.DataFrame,
                        task_type: TASK_TYPE_OPTIONS,
                        model_granularity: MODEL_GRANULARITY_OPTIONS,
                        split_type: SPLIT_TYPE_OPTIONS,
-                       models: Optional[list[str]] = None) -> tuple[list[str], np.ndarray, np.ndarray]:
+                       models: Optional[list[str]] = None,
+                       newlines: bool = False) -> tuple[list[str], np.ndarray, np.ndarray]:
     """Gets means and stds for metric results in a canonical model order.
 
     :param results: A DataFrame containing all the experiment results.
@@ -81,6 +85,7 @@ def get_means_and_stds(results: pd.DataFrame,
     :param model_granularity: The model granularity to limit to.
     :param split_type: The split type to limit to.
     :param models: An optional list of models that will be included in the plot. If None, includes all models.
+    :param newlines: Whether to add newlines in the model names.
     :return: A tuple containing model names, means, and stds in canonical model order.
     """
     # Limit results to this experimental setting
@@ -96,7 +101,7 @@ def get_means_and_stds(results: pd.DataFrame,
 
     # Get model names and results
     # TODO: is this possible with pandas sort_values
-    model_names = np.array([row_to_model_name(row) for _, row in experiment_results.iterrows()])
+    model_names = np.array([row_to_model_name(row=row, newlines=newlines) for _, row in experiment_results.iterrows()])
     mean_values = experiment_results[f'{metric}_mean'].to_numpy()
     std_values = experiment_results[f'{metric}_std'].to_numpy()
 
@@ -134,8 +139,8 @@ def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Opt
 
             all_model_names, all_mean_values, all_std_values, all_splits = [], [], [], []
 
-            for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
-                for split_type in get_args(SPLIT_TYPE_OPTIONS):
+            for split_type in get_args(SPLIT_TYPE_OPTIONS):
+                for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
                         continue
 
@@ -146,36 +151,43 @@ def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Opt
                         task_type=task_type,
                         model_granularity=model_granularity,
                         split_type=split_type,
-                        models=models
+                        models=models,
+                        newlines=False
                     )
                     all_model_names.append(model_names)
                     all_mean_values.append(mean_values)
                     all_std_values.append(std_values)
-                    all_splits.append(f'{split_type} {model_granularity.replace("_", " ")}')
+                    all_splits.append(f'{split_type.replace("_", " ").title()}\n{model_granularity.title()}')
 
             # Ensure all the same model names
             assert all((all_model_names[i] == all_model_names[0]).all() for i in range(len(all_model_names)))
 
+            all_mean_values = np.array(all_mean_values)
+            all_std_values = np.array(all_std_values)
+
+            model_names = all_model_names[0]
             num_splits = len(all_model_names)
-            num_models = len(all_model_names[0])
-            width = 1 / (1.25 * num_splits)
-            offset = width * num_splits / 2
+            num_models = len(model_names)
+            width = 1 / (1.25 * num_models)
+            offset = width * num_models / 2
 
-            for i, (model_names, mean_values, std_values, split) in enumerate(
-                    zip(all_model_names, all_mean_values, all_std_values, all_splits)):
-                plt.bar(np.arange(len(mean_values)) + i * width - offset, mean_values,
-                        width=width, alpha=0.5, yerr=std_values, capsize=2, label=split, align='edge')
+            for i in range(num_models):
+                model_name = model_names[i]
+                mean_values = all_mean_values[:, i]
+                std_values = all_std_values[:, i]
+                # TODO: change yerr thickness
+                plt.bar(np.arange(num_splits) + i * width - offset, mean_values,
+                        width=width, alpha=0.5, yerr=std_values, capsize=2, label=model_name, align='edge')
 
-            plt.xticks(np.arange(num_models), all_model_names[0], fontsize=5)
+            plt.xticks(np.arange(num_splits), all_splits, fontsize=6)
             plt.ylabel(metric)
             plt.title(f'{task_type.title()} {metric}')
-            plt.legend(fontsize=5)
+            plt.legend(fontsize=6)
 
             # Save plot
             experiment_save_dir = save_dir / task_type / f'{metric}.pdf'
             experiment_save_dir.parent.mkdir(parents=True, exist_ok=True)
             plt.savefig(experiment_save_dir, bbox_inches='tight')
-            exit()
 
 
 def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
@@ -191,8 +203,8 @@ def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optiona
     # Plot results
     for task_type in get_args(TASK_TYPE_OPTIONS):
         for metric in METRICS:
-            for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
-                for split_type in get_args(SPLIT_TYPE_OPTIONS):
+            for split_type in get_args(SPLIT_TYPE_OPTIONS):
+                for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
                         continue
 
@@ -203,7 +215,8 @@ def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optiona
                         task_type=task_type,
                         model_granularity=model_granularity,
                         split_type=split_type,
-                        models=models
+                        models=models,
+                        newlines=True
                     )
 
                     # Plot results
@@ -211,7 +224,7 @@ def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optiona
                     plt.bar(model_names, mean_values, alpha=0.5, yerr=std_values, capsize=5)
                     plt.xticks(fontsize=5)
                     plt.ylabel(metric)
-                    plt.title(f'{split_type.title()} Split {model_granularity.replace("_", " ").title()} '
+                    plt.title(f'{split_type.replace("_", " ").title()} Split {model_granularity.title()} '
                               f'{task_type.title()} {metric}')
 
                     # Save plot
@@ -243,18 +256,18 @@ def plot_results(results_path: Path, save_dir: Path) -> None:
         models=LIMITED_MODELS
     )
 
-    # # Plot results by split
-    # plot_results_by_split(
-    #     results=results,
-    #     save_dir=save_dir / 'by_split'
-    # )
-    #
-    # # Plot results by split with limited models
-    # plot_results_by_split(
-    #     results=results,
-    #     save_dir=save_dir / 'by_split_limited',
-    #     models=LIMITED_MODELS
-    # )
+    # Plot results by split
+    plot_results_by_split(
+        results=results,
+        save_dir=save_dir / 'by_split'
+    )
+
+    # Plot results by split with limited models
+    plot_results_by_split(
+        results=results,
+        save_dir=save_dir / 'by_split_limited',
+        models=LIMITED_MODELS
+    )
 
 
 if __name__ == '__main__':
