@@ -156,17 +156,20 @@ def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Opt
             # Ensure all the same model names
             assert all((all_model_names[i] == all_model_names[0]).all() for i in range(len(all_model_names)))
 
-            width = 1 / len(all_model_names) / 2
+            num_splits = len(all_model_names)
+            num_models = len(all_model_names[0])
+            width = 1 / (1.25 * num_splits)
+            offset = width * num_splits / 2
 
             for i, (model_names, mean_values, std_values, split) in enumerate(
                     zip(all_model_names, all_mean_values, all_std_values, all_splits)):
-                plt.bar(np.arange(len(mean_values)) + i * width - 0.5, mean_values,
-                        width=width, alpha=0.5, yerr=std_values, capsize=5, label=split)
+                plt.bar(np.arange(len(mean_values)) + i * width - offset, mean_values,
+                        width=width, alpha=0.5, yerr=std_values, capsize=2, label=split, align='edge')
 
-            plt.xticks(np.arange(len(all_model_names[0])), all_model_names[0], fontsize=5)
+            plt.xticks(np.arange(num_models), all_model_names[0], fontsize=5)
             plt.ylabel(metric)
             plt.title(f'{task_type.title()} {metric}')
-            plt.legend()
+            plt.legend(fontsize=5)
 
             # Save plot
             experiment_save_dir = save_dir / task_type / f'{metric}.pdf'
