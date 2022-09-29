@@ -30,7 +30,7 @@ wget -P data https://raw.githubusercontent.com/jbloomlab/SARS2_RBD_Ab_escape_map
 
 ## Extract RBD
 
-Extract the SARS-CoV-2 RBD sequence and site to amino acid mapping.
+Extract the SARS-CoV-2 RBD sequence and site to amino acid mapping. This has already been done and is available in `constants.py`.
 
 ```bash
 python extract_rbd.py \
@@ -136,10 +136,10 @@ python combine_results.py \
 ```
 
 
-## Analyze Results
+## Plot Results
 
 ```bash
-python analyze_results.py \
+python plot_results.py \
     --results_path results/all_results.csv \
     --save_dir plots/results
 ```
