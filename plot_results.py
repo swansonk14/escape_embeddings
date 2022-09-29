@@ -175,9 +175,9 @@ def plot_results_across_split(results: pd.DataFrame, save_dir: Path, models: Opt
                 model_name = model_names[i]
                 mean_values = all_mean_values[:, i]
                 std_values = all_std_values[:, i]
-                # TODO: change yerr thickness
                 plt.bar(np.arange(num_splits) + i * width - offset, mean_values,
-                        width=width, alpha=0.5, yerr=std_values, capsize=2, label=model_name, align='edge')
+                        width=width, yerr=std_values, alpha=0.5, label=model_name, align='edge',
+                        error_kw=dict(lw=1, capsize=2, capthick=1))
 
             plt.xticks(np.arange(num_splits), all_splits, fontsize=6)
             plt.ylabel(metric)
