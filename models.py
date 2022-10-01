@@ -482,7 +482,6 @@ class Attention(nn.Module):
         raise NotImplementedError
 
 
-# TODO: better name
 class EmbeddingCoreModel(nn.Module):
     """The core neural model that predicts escape scores by using antibody/antigen embeddings."""
 
@@ -587,7 +586,6 @@ class EmbeddingModel(PyTorchEscapeModel):
         if self.antibody_embeddings is not None:
             self.antibody_embedding_dim = next(iter(self.antibody_embeddings.values())).shape[-1]
 
-            # TODO: this might not be necessary and/or could use alternate dimensionality for attention
             if self.antibody_embedding_dim == 'attention':
                 assert self.antigen_embedding_dim == self.antibody_embedding_dim
         else:
