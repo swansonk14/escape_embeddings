@@ -279,7 +279,7 @@ def predict_escape(
         antigen_embeddings: Optional[dict[str, torch.FloatTensor]] = torch.load(antigen_embeddings_path)
 
         print(f'Loaded {len(antigen_embeddings):,} antigen embeddings with dimensionality '
-              f'{len(next(iter(antigen_embeddings.values())))}\n')
+              f'{next(iter(antigen_embeddings.values())).shape[-1]:,}\n')
     else:
         antigen_embeddings = None
 
@@ -288,7 +288,7 @@ def predict_escape(
         antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = torch.load(antibody_embeddings_path)
 
         print(f'Loaded {len(antibody_embeddings):,} antibody embeddings with dimensionality '
-              f'{len(next(iter(antibody_embeddings.values())))}\n')
+              f'{next(iter(antibody_embeddings.values())).shape[-1]:,}\n')
     else:
         antibody_embeddings = None
 

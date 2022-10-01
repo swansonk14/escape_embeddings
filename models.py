@@ -457,11 +457,13 @@ class EmbeddingModel(EscapeModel):
         self.wildtype_embedding = self.antigen_embeddings['wildtype']
 
         # Set up input and output dims
+        antigen_embedding_dim = (1 + (self.antigen_embedding_type == 'mutant_difference')) * self.antigen_embedding_dim
+
         if self.antibody_embeddings is not None and self.antibody_embedding_type == 'concatenation':
-            self.input_dim = self.antigen_embedding_dim + 2 * self.antibody_embedding_dim
+            self.input_dim = antigen_embedding_dim + 2 * self.antibody_embedding_dim  # heavy and light chain
             # TODO: handle attention
         else:
-            self.input_dim = self.antigen_embedding_dim
+            self.input_dim = antigen_embedding_dim
 
         # Ensure PyTorch reproducibility
         torch.manual_seed(0)
@@ -512,11 +514,20 @@ class EmbeddingModel(EscapeModel):
         # Optionally convert mutant embeddings to difference embeddings
         if self.antigen_embedding_type == 'mutant':
             batch_antigen_embeddings = batch_antigen_mutant_embeddings
-        elif self.antigen_embedding_type == 'difference':
-            batch_antigen_embeddings = (
+        elif self.antigen_embedding_type in {'difference', 'mutant_difference'}:
+            batch_difference_embeddings = (
                     batch_antigen_mutant_embeddings
                     - self.wildtype_embedding[site_indices if self.antigen_embedding_granularity == 'residue' else slice(None)]
             )
+
+            if self.antigen_embedding_type == 'difference':
+                batch_antigen_embeddings = batch_difference_embeddings
+            elif self.antigen_embedding_type == 'mutant_difference':
+                batch_antigen_embeddings = torch.cat(
+                    (batch_antigen_mutant_embeddings, batch_difference_embeddings), dim=1
+                )
+            else:
+                raise ValueError(f'Antigen embedding type "{self.antigen_embedding_type}" is not supported.')
         else:
             raise ValueError(f'Antigen embedding type "{self.antigen_embedding_type}" is not supported.')
 
