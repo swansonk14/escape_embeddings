@@ -314,13 +314,16 @@ class PyTorchEscapeModel(EscapeModel):
         else:
             raise ValueError(f'Task type "{self.task_type}" is not supported.')
 
-        # Create optimizer
-        self.optimizer = torch.optim.Adam(self.core_model.parameters())
-
     @property
     @abstractmethod
     def core_model(self) -> nn.Module:
         """Gets the core PyTorch model."""
+        pass
+
+    @property
+    @abstractmethod
+    def optimizer(self) -> torch.optim.Adam:
+        """Gets the optimizer."""
         pass
 
     @abstractmethod
@@ -565,6 +568,12 @@ class EmbeddingModel(PyTorchEscapeModel):
         :param task_type: The type of task to perform, i.e., classification or regression.
         TODO: document remaining parameters
         """
+        super(EmbeddingModel, self).__init__(
+            task_type=task_type,
+            num_epochs=num_epochs,
+            batch_size=batch_size
+        )
+
         if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
             raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                       f'has not been implemented yet.')
@@ -622,16 +631,18 @@ class EmbeddingModel(PyTorchEscapeModel):
             attention_num_heads=self.attention_num_heads
         )
 
-        super(EmbeddingModel, self).__init__(
-            task_type=task_type,
-            num_epochs=num_epochs,
-            batch_size=batch_size
-        )
+        # Create optimizer
+        self._optimizer = torch.optim.Adam(self.core_model.parameters())
 
     @property
     def core_model(self) -> nn.Module:
         """Gets the core PyTorch model."""
         return self._core_model
+
+    @property
+    def optimizer(self) -> torch.optim.Adam:
+        """Gets the optimizer."""
+        return self._optimizer
 
     def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
                       ) -> tuple[torch.FloatTensor, Optional[torch.FloatTensor]]:
@@ -790,6 +801,12 @@ class RNNModel(PyTorchEscapeModel):
         :param task_type: The type of task to perform, i.e., classification or regression.
         TODO: document remaining parameters
         """
+        super(RNNModel, self).__init__(
+            task_type=task_type,
+            num_epochs=num_epochs,
+            batch_size=batch_size
+        )
+
         self.hidden_dim = hidden_dim
         self.hidden_layer_dims = hidden_layer_dims
 
@@ -799,16 +816,18 @@ class RNNModel(PyTorchEscapeModel):
             hidden_layer_dims=self.hidden_layer_dims
         )
 
-        super(RNNModel, self).__init__(
-            task_type=task_type,
-            num_epochs=num_epochs,
-            batch_size=batch_size
-        )
+        # Create optimizer
+        self._optimizer = torch.optim.Adam(self.core_model.parameters())
 
     @property
     def core_model(self) -> nn.Module:
         """Gets the core PyTorch model."""
         return self._core_model
+
+    @property
+    def optimizer(self) -> torch.optim.Adam:
+        """Gets the optimizer."""
+        return self._optimizer
 
     def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
                       ) -> tuple[torch.LongTensor, Optional[torch.FloatTensor]]:
