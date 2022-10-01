@@ -22,6 +22,7 @@ from constants import (
     DEFAULT_HIDDEN_LAYER_DIMS,
     DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY,
     DEFAULT_NUM_EPOCHS_PER_ANTIBODY,
+    DEFAULT_RNN_HIDDEN_DIM,
     EMBEDDING_GRANULARITY_OPTIONS,
     EPITOPE_GROUP_COLUMN,
     ESCAPE_COLUMN,
@@ -34,7 +35,7 @@ from constants import (
     TASK_TYPE_OPTIONS,
     WILDTYPE_COLUMN
 )
-from models import EmbeddingModel, LikelihoodModel, MutationModel, SiteModel
+from models import EmbeddingModel, LikelihoodModel, MutationModel, RNNModel, SiteModel
 
 
 def split_data(
@@ -103,6 +104,7 @@ def train_and_eval_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        rnn_hidden_dim: int = DEFAULT_RNN_HIDDEN_DIM,
         attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
@@ -139,6 +141,14 @@ def train_and_eval_escape(
         model = MutationModel(task_type=task_type)
     elif model_type == 'site':
         model = SiteModel(task_type=task_type)
+    elif model_type == 'rnn':
+        model = RNNModel(
+            task_type=task_type,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            hidden_dim=rnn_hidden_dim,
+            hidden_layer_dims=hidden_layer_dims
+        )
     elif model_type == 'likelihood':
         model = LikelihoodModel(task_type=task_type, antigen_likelihoods=antigen_likelihoods)
     elif model_type == 'embedding':
@@ -215,6 +225,7 @@ def predict_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        rnn_hidden_dim: int = DEFAULT_RNN_HIDDEN_DIM,
         attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
@@ -254,7 +265,7 @@ def predict_escape(
         raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                   f'has not been implemented yet.')
 
-    if model_type == 'embedding' and num_epochs is None:
+    if model_type in {'rnn', 'embedding'} and num_epochs is None:
         if model_granularity == 'per-antibody':
             num_epochs = DEFAULT_NUM_EPOCHS_PER_ANTIBODY
         elif model_granularity == 'cross-antibody':
@@ -327,6 +338,7 @@ def predict_escape(
             antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
             hidden_layer_dims=hidden_layer_dims,
+            rnn_hidden_dim=rnn_hidden_dim,
             attention_num_heads=attention_num_heads,
             num_epochs=num_epochs,
             batch_size=batch_size,

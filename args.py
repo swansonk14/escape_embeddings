@@ -10,6 +10,7 @@ from constants import (
     DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
+    DEFAULT_RNN_HIDDEN_DIM,
     EMBEDDING_GRANULARITY_OPTIONS,
     MODEL_GRANULARITY_OPTIONS,
     MODEL_TYPE_OPTIONS,
@@ -49,6 +50,8 @@ class PredictEscapeArgs(Tap):
     """Method of including the antibody embeddings with antigen embeddings."""
     hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS
     """The sizes of the hidden layers of the MLP model that will be trained."""
+    rnn_hidden_dim: int = DEFAULT_RNN_HIDDEN_DIM
+    """The dimensionality of the RNN model."""
     attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS
     """The number of attention heads."""
     num_epochs: Optional[int] = None

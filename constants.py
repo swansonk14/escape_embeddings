@@ -3,6 +3,7 @@ from typing import Literal
 
 AA_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
 AA_ALPHABET_SET = set(AA_ALPHABET)
+AA_TO_INDEX = {aa: index for index, aa in enumerate(AA_ALPHABET)}
 HEAVY_CHAIN = 'heavy'
 LIGHT_CHAIN = 'light'
 ANTIBODY_CHAINS = [HEAVY_CHAIN, LIGHT_CHAIN]
@@ -53,10 +54,11 @@ RBD_SITES = sorted(RBD_SITE_TO_AA)
 RBD_START_SITE = RBD_SITES[0]  # inclusive
 RBD_END_SITE = RBD_SITES[-1]  # inclusive
 RBD_SEQUENCE = ''.join(RBD_SITE_TO_AA[site] for site in RBD_SITES)
+RBD_AA_INDICES = [AA_TO_INDEX[aa] for aa in RBD_SEQUENCE]
 
 # Literal types
 MODEL_GRANULARITY_OPTIONS = Literal['per-antibody', 'cross-antibody']
-MODEL_TYPE_OPTIONS = Literal['mutation', 'site', 'likelihood', 'embedding']
+MODEL_TYPE_OPTIONS = Literal['mutation', 'site', 'rnn', 'likelihood', 'embedding']
 TASK_TYPE_OPTIONS = Literal['classification', 'regression']
 SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
 EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
@@ -69,6 +71,7 @@ DEFAULT_BATCH_SIZE = 100
 DEFAULT_HIDDEN_LAYER_DIMS = (100, 100)
 DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY = 1
 DEFAULT_NUM_EPOCHS_PER_ANTIBODY = 50
+DEFAULT_RNN_HIDDEN_DIM = 100
 
 # Metrics
 METRICS = ['ROC-AUC', 'PRC-AUC', 'R2', 'MSE']

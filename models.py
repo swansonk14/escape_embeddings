@@ -10,6 +10,7 @@ from tqdm import tqdm, trange
 
 
 from constants import (
+    AA_TO_INDEX,
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_ATTENTION_NUM_HEADS,
@@ -18,6 +19,7 @@ from constants import (
     EMBEDDING_GRANULARITY_OPTIONS,
     HEAVY_CHAIN,
     LIGHT_CHAIN,
+    RBD_AA_INDICES,
     RBD_START_SITE,
     TASK_TYPE_OPTIONS
 )
@@ -284,6 +286,147 @@ class MutationDataset(Dataset):
         raise NotImplementedError(f'__getitem__ with item type "{type(item)}" is not supported.')
 
 
+class PyTorchEscapeModel(EscapeModel):
+    """An abstract PyTorch model that predicts escape."""
+
+    def __init__(self,
+                 task_type: TASK_TYPE_OPTIONS,
+                 num_epochs: int,
+                 batch_size: int) -> None:
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        """
+        super(PyTorchEscapeModel, self).__init__(task_type=task_type)
+
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+
+        # Ensure PyTorch reproducibility
+        torch.manual_seed(0)
+        torch.use_deterministic_algorithms(True)
+
+        # Create loss function
+        if self.task_type == 'classification':
+            self.loss_fn = nn.BCEWithLogitsLoss()
+        elif self.task_type == 'regression':
+            self.loss_fn = nn.MSELoss()
+        else:
+            raise ValueError(f'Task type "{self.task_type}" is not supported.')
+
+        # Create optimizer
+        self.optimizer = torch.optim.Adam(self.core_model.parameters())
+
+    @property
+    @abstractmethod
+    def core_model(self) -> nn.Module:
+        """Gets the core PyTorch model."""
+        pass
+
+    @abstractmethod
+    def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
+                      ) -> tuple[torch.Tensor, Optional[torch.FloatTensor]]:
+        """Collate antibody and/or antigen sequences/embeddings and escape scores for input to the model.
+
+        :param input_tuples: A list of tuples of antibody, site, mutation, and escape score (if available).
+        :return: A tuple with a Tensor containing the antibody and/or antigen sequences/embeddings
+                 and a FloatTensor of escape scores (if available).
+        """
+        pass
+
+    def fit(self,
+            antibodies: list[str],
+            sites: list[int],
+            wildtypes: list[str],
+            mutants: list[str],
+            escapes: list[float]) -> 'PyTorchModel':
+        """Fits the model on the training escape data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :param escapes: A list of escape scores for each mutation at each site.
+        :return: The fitted model.
+        """
+        # Create mutation dataset
+        dataset = MutationDataset(
+            antibodies=antibodies,
+            sites=sites,
+            mutants=mutants,
+            escapes=escapes
+        )
+
+        # Create data loader
+        generator = torch.Generator()
+        generator.manual_seed(0)
+        data_loader = DataLoader(
+            dataset=dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            collate_fn=self.collate_batch,
+            generator=generator
+        )
+
+        # Train
+        for _ in trange(self.num_epochs, desc='Epochs', leave=False):
+            for batch_data, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+                self.core_model.zero_grad()
+
+                preds = self.core_model(batch_data)
+
+                loss = self.loss_fn(preds, batch_escape)
+
+                loss.backward()
+                self.optimizer.step()
+
+        return self
+
+    def predict(self,
+                antibodies: list[str],
+                sites: list[int],
+                wildtypes: list[str],
+                mutants: list[str]) -> np.ndarray:
+        """Makes escape predictions on the test data.
+
+        :param antibodies: A list of antibodies.
+        :param sites: A list of mutated sites.
+        :param wildtypes: A list of wildtype amino acids at each site.
+        :param mutants: A list of mutant amino acids at each site.
+        :return: A numpy array of predicted escape scores.
+        """
+        # Create mutation dataset
+        dataset = MutationDataset(
+            antibodies=antibodies,
+            sites=sites,
+            mutants=mutants
+        )
+
+        # Create data loader
+        data_loader = DataLoader(
+            dataset=dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            collate_fn=self.collate_batch
+        )
+
+        # Predict
+        all_preds = []
+
+        with torch.no_grad():
+            for batch_embeddings, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+                preds = self.core_model(batch_embeddings)
+                all_preds.append(preds.numpy())
+
+        all_preds = np.concatenate(all_preds)
+
+        return all_preds
+
+    def __str__(self) -> str:
+        """Return a string representation of the model."""
+        return str(self.core_model)
+
+
 class MLP(nn.Module):
     """A multilayer perceptron model."""
 
@@ -403,7 +546,7 @@ class EmbeddingCoreModel(nn.Module):
         return x
 
 
-class EmbeddingModel(EscapeModel):
+class EmbeddingModel(PyTorchEscapeModel):
     """A model that predicts escape scores by using antibody/antigen embeddings."""
 
     def __init__(self,
@@ -423,15 +566,12 @@ class EmbeddingModel(EscapeModel):
         :param task_type: The type of task to perform, i.e., classification or regression.
         TODO: document remaining parameters
         """
-        super(EmbeddingModel, self).__init__(task_type=task_type)
-
         if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
             raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                       f'has not been implemented yet.')
 
         assert (antibody_embeddings is None) == (antibody_embedding_type is None)
 
-        self.num_epochs = num_epochs
         self.antigen_embeddings = antigen_embeddings
         self.antigen_embedding_granularity = antigen_embedding_granularity
         self.antigen_embedding_type = antigen_embedding_type
@@ -440,7 +580,6 @@ class EmbeddingModel(EscapeModel):
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_dims = hidden_layer_dims
         self.attention_num_heads = attention_num_heads
-        self.batch_size = batch_size
 
         # Get embedding dimensionalities
         self.antigen_embedding_dim = next(iter(self.antigen_embeddings.values())).shape[-1]
@@ -476,12 +615,8 @@ class EmbeddingModel(EscapeModel):
         if self.antibody_embeddings is not None:
             self.input_dim += 2 * self.antibody_embedding_dim  # heavy and light chain
 
-        # Ensure PyTorch reproducibility
-        torch.manual_seed(0)
-        torch.use_deterministic_algorithms(True)
-
         # Create core model
-        self.embedding_core_model = EmbeddingCoreModel(
+        self._core_model = EmbeddingCoreModel(
             binarize=self.binarize,
             antibody_attention=self.antibody_embedding_type == 'attention',
             input_dim=self.input_dim,
@@ -489,20 +624,19 @@ class EmbeddingModel(EscapeModel):
             attention_num_heads=self.attention_num_heads
         )
 
-        # Create loss function
-        if self.task_type == 'classification':
-            self.loss_fn = nn.BCEWithLogitsLoss()
-        elif self.task_type == 'regression':
-            self.loss_fn = nn.MSELoss()
-        else:
-            raise ValueError(f'Task type "{self.task_type}" is not supported.')
+        super(EmbeddingModel, self).__init__(
+            task_type=task_type,
+            num_epochs=num_epochs,
+            batch_size=batch_size
+        )
 
-        # Create optimizer
-        self.optimizer = torch.optim.Adam(self.embedding_core_model.parameters())
+    @property
+    def core_model(self) -> nn.Module:
+        """Gets the core PyTorch model."""
+        return self._core_model
 
-    def collate_embeddings_and_escape(self,
-                                      input_tuples: list[tuple[str, int, str, Optional[float]]]
-                                      ) -> tuple[torch.FloatTensor, Optional[torch.FloatTensor]]:
+    def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
+                      ) -> tuple[torch.FloatTensor, Optional[torch.FloatTensor]]:
         """Collate antibody and/or antigen embeddings and escape scores for input to the model.
 
         :param input_tuples: A list of tuples of antibody, site, mutation, and escape score (if available).
@@ -577,94 +711,140 @@ class EmbeddingModel(EscapeModel):
 
         return batch_embeddings, escapes
 
-    def fit(self,
-            antibodies: list[str],
-            sites: list[int],
-            wildtypes: list[str],
-            mutants: list[str],
-            escapes: list[float]) -> 'EmbeddingModel':
-        """Fits the model on the training escape data.
 
-        :param antibodies: A list of antibodies.
-        :param sites: A list of mutated sites.
-        :param wildtypes: A list of wildtype amino acids at each site.
-        :param mutants: A list of mutant amino acids at each site.
-        :param escapes: A list of escape scores for each mutation at each site.
-        :return: The fitted model.
+class RNNCoreModel(nn.Module):
+    """The core recurrent neural network that predicts escape scores based on one-hot amino acid features."""
+
+    def __init__(self,
+                 hidden_dim: int,
+                 hidden_layer_dims: tuple[int, ...]) -> None:
+        """Initialize the model.
+
+        TODO: params docstring
         """
-        # Create mutation dataset
-        dataset = MutationDataset(
-            antibodies=antibodies,
-            sites=sites,
-            mutants=mutants,
-            escapes=escapes
+        super(RNNCoreModel, self).__init__()
+
+        self.hidden_dim = hidden_dim
+        self.hidden_layer_dims = hidden_layer_dims
+
+        self.output_dim = 1
+
+        # Create amino acid embeddings
+        self.embeddings = nn.Embedding(
+            num_embeddings=len(AA_TO_INDEX),
+            embedding_dim=self.hidden_dim
         )
 
-        # Create data loader
-        generator = torch.Generator()
-        generator.manual_seed(0)
-        data_loader = DataLoader(
-            dataset=dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            collate_fn=self.collate_embeddings_and_escape,
-            generator=generator
+        # Create RNN model
+        self.rnn = nn.LSTM(
+            input_size=self.hidden_dim,
+            hidden_size=self.hidden_dim,
+            num_layers=1,
+            bidirectional=True
         )
 
-        # Train
-        for _ in trange(self.num_epochs, desc='Epochs', leave=False):
-            for batch_embeddings, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
-                self.embedding_core_model.zero_grad()
+        # Create MLP model
+        self.mlp = MLP(
+            input_dim=self.hidden_dim * (1 + self.rnn.bidirectional),
+            output_dim=self.output_dim,
+            hidden_layer_dims=self.hidden_layer_dims
+        )
 
-                preds = self.embedding_core_model(batch_embeddings)
+        # Create sigmoid function
+        self.sigmoid = nn.Sigmoid()
 
-                loss = self.loss_fn(preds, batch_escape)
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        """TODO: docstring"""
+        # Get batch size
+        batch_size = x.shape[1]
 
-                loss.backward()
-                self.optimizer.step()
+        # Embed amino acids
+        x = self.embeddings(x)
 
-        return self
+        # Run RNN
+        output, (hidden, cell) = self.rnn(x)  # hidden: (2, batch_size, hidden_dim)
+        x = torch.transpose(hidden, 0, 1).reshape(batch_size, -1)  # (batch_size, 2 * hidden_dim)
 
-    def predict(self,
-                antibodies: list[str],
-                sites: list[int],
-                wildtypes: list[str],
-                mutants: list[str]) -> np.ndarray:
-        """Makes escape predictions on the test data.
+        # Apply MLP
+        x = self.mlp(x)
 
-        :param antibodies: A list of antibodies.
-        :param sites: A list of mutated sites.
-        :param wildtypes: A list of wildtype amino acids at each site.
-        :param mutants: A list of mutant amino acids at each site.
-        :return: A numpy array of predicted escape scores.
+        # Apply sigmoid if appropriate
+        if not self.training and self.binarize:
+            x = self.sigmoid(x)
+
+        # Squeeze output dimension
+        x = x.squeeze(dim=1)
+
+        return x
+
+
+class RNNModel(PyTorchEscapeModel):
+    """A recurrent neural network that predicts escape scores based on one-hot amino acid features."""
+
+    def __init__(self,
+                 task_type: TASK_TYPE_OPTIONS,
+                 num_epochs: int,
+                 batch_size: int,
+                 hidden_dim: int,
+                 hidden_layer_dims: tuple[int, ...]) -> None:
+        """Initialize the model.
+
+        :param task_type: The type of task to perform, i.e., classification or regression.
+        TODO: document remaining parameters
         """
-        # Create mutation dataset
-        dataset = MutationDataset(
-            antibodies=antibodies,
-            sites=sites,
-            mutants=mutants
+        self.hidden_dim = hidden_dim
+        self.hidden_layer_dims = hidden_layer_dims
+
+        # Create model
+        self._core_model = RNNCoreModel(
+            hidden_dim=self.hidden_dim,
+            hidden_layer_dims=self.hidden_layer_dims
         )
 
-        # Create data loader
-        data_loader = DataLoader(
-            dataset=dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            collate_fn=self.collate_embeddings_and_escape
+        super(RNNModel, self).__init__(
+            task_type=task_type,
+            num_epochs=num_epochs,
+            batch_size=batch_size
         )
 
-        # Predict
-        all_preds = []
+    @property
+    def core_model(self) -> nn.Module:
+        """Gets the core PyTorch model."""
+        return self._core_model
 
-        with torch.no_grad():
-            for batch_embeddings, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
-                preds = self.embedding_core_model(batch_embeddings)
-                all_preds.append(preds.numpy())
+    def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
+                      ) -> tuple[torch.LongTensor, Optional[torch.FloatTensor]]:
+        """Collate antibody and/or antigen sequences and escape scores for input to the model.
 
-        all_preds = np.concatenate(all_preds)
+        :param input_tuples: A list of tuples of antibody, site, mutation, and escape score (if available).
+        :return: A tuple with a LongTensor containing the antibody and/or antigen sequences
+                 and a FloatTensor of escape scores (if available).
+        """
+        # Unpack list of tuples
+        antibodies, sites, mutants, escapes = zip(*input_tuples)
 
-        return all_preds
+        # Get site indices
+        site_indices = torch.LongTensor(sites) - RBD_START_SITE
 
-    def __str__(self) -> str:
-        """Return a string representation of the model."""
-        return str(self.embedding_core_model)
+        # Set up wildtype sequence indices
+        wildtype_indices = torch.LongTensor(RBD_AA_INDICES)
+
+        # Get mutant sequence indices
+        all_mutant_indices = []
+        for site_index, mutant in zip(site_indices, mutants):
+            mutant_indices = wildtype_indices.clone()
+            mutant_indices[site_index] = AA_TO_INDEX[mutant]
+            all_mutant_indices.append(mutant_indices)
+
+        # Stack mutant sequence indices as (sequence_length, num_sequences)
+        batch_data = torch.stack(all_mutant_indices).transpose(1, 0)
+
+        # Convert escape scores to FloatTensor
+        if escapes[0] is not None:
+            escapes = torch.FloatTensor(escapes)
+
+            # Optionally binarize escape scores
+            if self.binarize:
+                escapes = (escapes > 0).float()
+
+        return batch_data, escapes
