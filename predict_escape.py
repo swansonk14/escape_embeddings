@@ -17,6 +17,7 @@ from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIBODY_NAME_COLUMN,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
+    DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY,
@@ -102,6 +103,7 @@ def train_and_eval_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
         verbose: bool = True
@@ -150,7 +152,8 @@ def train_and_eval_escape(
             antibody_embedding_type=antibody_embedding_type,
             num_epochs=num_epochs,
             batch_size=batch_size,
-            hidden_layer_dims=hidden_layer_dims
+            hidden_layer_dims=hidden_layer_dims,
+            attention_num_heads=attention_num_heads
         )
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
@@ -212,6 +215,7 @@ def predict_escape(
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+        attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
         verbose: bool = False
@@ -246,8 +250,9 @@ def predict_escape(
     else:
         assert antibody_embedding_type is None and antibody_embedding_granularity is None
 
-    if antibody_embedding_granularity == 'residue':
-        assert antibody_embedding_type == 'attention'
+    if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
+        raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
+                                  f'has not been implemented yet.')
 
     if model_type == 'embedding' and num_epochs is None:
         if model_granularity == 'per-antibody':
@@ -322,6 +327,7 @@ def predict_escape(
             antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
             hidden_layer_dims=hidden_layer_dims,
+            attention_num_heads=attention_num_heads,
             num_epochs=num_epochs,
             batch_size=batch_size,
             verbose=verbose

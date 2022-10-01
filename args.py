@@ -7,6 +7,7 @@ from tap import Tap
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
+    DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     EMBEDDING_GRANULARITY_OPTIONS,
@@ -48,6 +49,8 @@ class PredictEscapeArgs(Tap):
     """Method of including the antibody embeddings with antigen embeddings."""
     hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS
     """The sizes of the hidden layers of the MLP model that will be trained."""
+    attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS
+    """The number of attention heads."""
     num_epochs: Optional[int] = None
     """The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity."""
     batch_size: int = DEFAULT_BATCH_SIZE

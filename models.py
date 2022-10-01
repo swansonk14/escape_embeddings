@@ -12,6 +12,7 @@ from tqdm import tqdm, trange
 from constants import (
     ANTIBODY_EMBEDDING_TYPE_OPTIONS,
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
+    DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     EMBEDDING_GRANULARITY_OPTIONS,
@@ -346,7 +347,8 @@ class EmbeddingCoreModel(nn.Module):
                  binarize: bool,
                  antibody_attention: bool,
                  input_dim: int,
-                 hidden_layer_dims: tuple[int, ...]) -> None:
+                 hidden_layer_dims: tuple[int, ...],
+                 attention_num_heads: int) -> None:
         """Initialize the model.
 
         TODO: params docstring
@@ -357,12 +359,16 @@ class EmbeddingCoreModel(nn.Module):
         self.antibody_attention = antibody_attention
         self.input_dim = input_dim
         self.hidden_layer_dims = hidden_layer_dims
+        self.attention_num_heads = attention_num_heads
 
         self.output_dim = 1
 
         # Create attention model
         if self.antibody_attention:
-            self.attention = Attention()  # TODO
+            self.attention = nn.MultiheadAttention(
+                embed_dim=self.input_dim // 3,
+                num_heads=self.attention_num_heads
+            )
         else:
             self.attention = None
 
@@ -380,7 +386,9 @@ class EmbeddingCoreModel(nn.Module):
         """TODO: docstring"""
         # Apply attention
         if self.antibody_attention:
-            x = self.attention(x)
+            batch_size = x.shape[1]
+            x, x_weights = self.attention(x, x, x)  # (3, batch_size, embedding_size), (batch_size, 3, 3)
+            x = torch.transpose(x, 0, 1).reshape(batch_size, -1)  # (batch_size, 3 * embedding_size)
 
         # Apply MLP
         x = self.mlp(x)
@@ -408,6 +416,7 @@ class EmbeddingModel(EscapeModel):
                  antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+                 attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
                  batch_size: int = DEFAULT_BATCH_SIZE) -> None:
         """Initialize the model.
 
@@ -415,6 +424,10 @@ class EmbeddingModel(EscapeModel):
         TODO: document remaining parameters
         """
         super(EmbeddingModel, self).__init__(task_type=task_type)
+
+        if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
+            raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
+                                      f'has not been implemented yet.')
 
         assert (antibody_embeddings is None) == (antibody_embedding_type is None)
 
@@ -426,6 +439,7 @@ class EmbeddingModel(EscapeModel):
         self.antibody_embedding_granularity = antibody_embedding_granularity
         self.antibody_embedding_type = antibody_embedding_type
         self.hidden_layer_dims = hidden_layer_dims
+        self.attention_num_heads = attention_num_heads
         self.batch_size = batch_size
 
         # Get embedding dimensionalities
@@ -457,13 +471,10 @@ class EmbeddingModel(EscapeModel):
         self.wildtype_embedding = self.antigen_embeddings['wildtype']
 
         # Set up input and output dims
-        antigen_embedding_dim = (1 + (self.antigen_embedding_type == 'mutant_difference')) * self.antigen_embedding_dim
+        self.input_dim = (1 + (self.antigen_embedding_type == 'mutant_difference')) * self.antigen_embedding_dim
 
-        if self.antibody_embeddings is not None and self.antibody_embedding_type == 'concatenation':
-            self.input_dim = antigen_embedding_dim + 2 * self.antibody_embedding_dim  # heavy and light chain
-            # TODO: handle attention
-        else:
-            self.input_dim = antigen_embedding_dim
+        if self.antibody_embeddings is not None:
+            self.input_dim += 2 * self.antibody_embedding_dim  # heavy and light chain
 
         # Ensure PyTorch reproducibility
         torch.manual_seed(0)
@@ -474,7 +485,8 @@ class EmbeddingModel(EscapeModel):
             binarize=self.binarize,
             antibody_attention=self.antibody_embedding_type == 'attention',
             input_dim=self.input_dim,
-            hidden_layer_dims=self.hidden_layer_dims
+            hidden_layer_dims=self.hidden_layer_dims,
+            attention_num_heads=self.attention_num_heads
         )
 
         # Create loss function
@@ -533,16 +545,23 @@ class EmbeddingModel(EscapeModel):
 
         # Optionally add antibody embeddings to antigen embeddings
         if self.antibody_embeddings is not None:
-            batch_antibody_embeddings = torch.stack([
-                torch.cat((self.antibody_embeddings[f'{antibody}_{HEAVY_CHAIN}'],
-                           self.antibody_embeddings[f'{antibody}_{LIGHT_CHAIN}']))
+            batch_antibody_heavy_embeddings = torch.stack([
+                self.antibody_embeddings[f'{antibody}_{HEAVY_CHAIN}']
+                for antibody in antibodies
+            ])
+            batch_antibody_light_embeddings = torch.stack([
+                self.antibody_embeddings[f'{antibody}_{LIGHT_CHAIN}']
                 for antibody in antibodies
             ])
 
             if self.antibody_embedding_type == 'concatenation':
-                batch_embeddings = torch.cat((batch_antigen_embeddings, batch_antibody_embeddings), dim=1)
+                batch_embeddings = torch.cat(
+                    (batch_antigen_embeddings, batch_antibody_heavy_embeddings, batch_antibody_light_embeddings), dim=1
+                )
             elif self.antibody_embedding_type == 'attention':
-                raise NotImplementedError  # TODO: implement this
+                batch_embeddings = torch.stack(
+                    (batch_antigen_embeddings, batch_antibody_heavy_embeddings, batch_antibody_light_embeddings)
+                )
             else:
                 raise ValueError(f'Antibody embedding type "{self.antibody_embedding_type} is not supported.')
         else:
