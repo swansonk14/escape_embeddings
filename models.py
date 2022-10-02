@@ -422,9 +422,9 @@ class PyTorchEscapeModel(EscapeModel):
         all_preds = []
 
         with torch.no_grad():
-            for batch_embeddings, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+            for batch_data, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
                 batch_data = batch_data.to(self.device)
-                preds = self.core_model(batch_embeddings)
+                preds = self.core_model(batch_data)
                 all_preds.append(preds.cpu().numpy())
 
         all_preds = np.concatenate(all_preds)
