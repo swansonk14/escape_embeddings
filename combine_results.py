@@ -36,6 +36,7 @@ def combine_results(results_dir: Path, save_path: Path) -> None:
                 f'{metric}_{value_type}': value_type_to_values[value_type]
                 for metric, value_type_to_values in results.items()
                 for value_type in ['mean', 'std', 'num', 'num_nan']
+                if metric != 'time'
             }
         })
 

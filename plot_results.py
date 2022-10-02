@@ -69,6 +69,8 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
                 model_name += f' Att{whitespace}Antibody'
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
+    elif row.model_type == 'rnn':
+        model_name = row.model_type.upper()
     else:
         model_name = row.model_type.title()
 

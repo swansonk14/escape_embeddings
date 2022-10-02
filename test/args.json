@@ -1,0 +1,43 @@
+{
+    "antibody_embedding_granularity": null,
+    "antibody_embedding_type": null,
+    "antibody_embeddings_path": null,
+    "antibody_path": null,
+    "antigen_embedding_granularity": null,
+    "antigen_embedding_type": null,
+    "antigen_embeddings_path": null,
+    "antigen_likelihoods_path": null,
+    "attention_num_heads": 8,
+    "batch_size": 100,
+    "data_path": {
+        "_type": "python_object (type = PosixPath)",
+        "_value": "gASVLwAAAAAAAACMB3BhdGhsaWKUjAlQb3NpeFBhdGiUk5SMBGRhdGGUjAhkYXRhLmNzdpSGlFKULg=="
+    },
+    "device": "cpu",
+    "hidden_layer_dims": {
+        "_type": "tuple",
+        "_value": [
+            100,
+            100
+        ]
+    },
+    "model_granularity": "per-antibody",
+    "model_type": "rnn",
+    "num_epochs": null,
+    "reproducibility": {
+        "command_line": "python predict_escape.py --data_path data/data.csv --model_type rnn --model_granularity per-antibody --task_type classification --split_type mutation --save_dir test --verbose",
+        "git_has_uncommitted_changes": true,
+        "git_root": "/Users/kyleswanson/Stanford/tcr_antigen/escape_embeddings",
+        "git_url": "https://github.com/swansonk14/escape_embeddings/tree/f0fe7bea8bc45a230b5c6bb4797a842d333601c5",
+        "time": "Sat Oct  1 18:38:14 2022"
+    },
+    "rnn_hidden_dim": 100,
+    "save_dir": {
+        "_type": "python_object (type = PosixPath)",
+        "_value": "gASVJAAAAAAAAACMB3BhdGhsaWKUjAlQb3NpeFBhdGiUk5SMBHRlc3SUhZRSlC4="
+    },
+    "skip_existing": false,
+    "split_type": "mutation",
+    "task_type": "classification",
+    "verbose": true
+}
