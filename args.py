@@ -59,9 +59,9 @@ class PredictEscapeArgs(Tap):
     """The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity."""
     batch_size: int = DEFAULT_BATCH_SIZE
     """The batch size for the embedding model."""
-    skip_existing: bool = False
-    """Whether to skip running the code if the save_dir already exists."""
     device: str = DEFAULT_DEVICE
     """The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models."""
     verbose: bool = False
     """Whether to print additional debug information."""
+    skip_existing: bool = False
+    """Whether to skip running the code if the save_dir already exists."""

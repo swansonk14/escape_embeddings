@@ -1,6 +1,6 @@
 """Run all experiments of predicting escape with different models and settings."""
 from pathlib import Path
-from typing import get_args
+from typing import get_args, Optional
 
 from tap import Tap
 
@@ -23,7 +23,8 @@ def run_experiments(
         antibody_embeddings_path: str,
         experiment_save_dir: Path,
         bash_save_path: Path,
-        skip_existing: bool
+        skip_existing: bool = False,
+        device: Optional[str] = None
 ) -> None:
     """Run all experiments of predicting escape with different models and settings.
     TODO: params docstring
@@ -102,6 +103,9 @@ def run_experiments(
 
             f.write(f'    {args[-2]} {args[-1]}')
 
+            if device is not None:
+                f.write(f' \\\n    --device {device}')
+
             if skip_existing:
                 f.write(' \\\n    --skip_existing')
 
@@ -124,6 +128,8 @@ if __name__ == '__main__':
         """Path to directory where all the experiment results will be saved."""
         bash_save_path: Path
         """Path to bash file where experiment commands will be saved."""
+        device: Optional[str] = None
+        """The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models."""
         skip_existing: bool = False
         """Whether to skip running the code if the save_dir already exists."""
 
