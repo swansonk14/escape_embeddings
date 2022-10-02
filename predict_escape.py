@@ -1,6 +1,8 @@
 """Train a model to predict antigen escape using ESM2 embeddings."""
 import json
+from datetime import timedelta
 from pathlib import Path
+from time import time
 from typing import Optional
 
 import numpy as np
@@ -239,6 +241,9 @@ def predict_escape(
     """Train a model to predict antigen escape using ESM2 embeddings."""
     # TODO: params docstring copied from args
 
+    # Start timer
+    start_time = time()
+
     # Validate arguments
     # TODO: improve error messages
     if model_granularity == 'per-antibody':
@@ -375,6 +380,11 @@ def predict_escape(
     for metric, values in summary_results.items():
         print(f'Test {metric} = {values["mean"]:.3f} +/- {values["std"]:.3f} ' +
               (f'({values["num_nan"]:,} / {values["num"]:,} NaN)' if values["num_nan"] > 0 else ''))
+
+    # End timer
+    summary_results['time'] = time() - start_time
+
+    print(f'Total time = {timedelta(seconds=summary_results["time"])}')
 
     # Save summary results
     with open(save_dir / 'results.json', 'w') as f:
