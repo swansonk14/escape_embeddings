@@ -49,7 +49,6 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
         elif row.antigen_embedding_granularity == 'residue':
             model_name += f'{whitespace}Res'
         else:
-            breakpoint()
             raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
 
         if isinstance(row.antigen_embedding_type, str):
