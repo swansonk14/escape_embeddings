@@ -15,13 +15,16 @@ from constants import (
 )
 
 LIMITED_MODELS = [
-    'Mutation', 'Site', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff',
-    'Antigen Res Mut', 'Antigen Res Mut + Antibody'
+    'Mutation', 'Site', 'RNN', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff',
+    'Antigen Res Mut', 'Antigen Res MutDiff', 'Antigen Res Mut + Antibody', 'Antigen Res Mut Att Antibody'
 ]
 MODEL_ORDER = [
-    'Mutation', 'Site', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Res Mut', 'Antigen Res Diff',
+    'Mutation', 'Site', 'RNN', 'Likelihood',
+    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Res Mut', 'Antigen Res Diff',
+    'Antigen Seq MutDiff', 'Antigen Res MutDiff',
     'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
     'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
+    'Antigen Res Mut Att Antibody'
 ]
 MODEL_NAME_TO_ORDER = {
     model_name: index
@@ -54,6 +57,8 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
                 model_name += ' Mut'
             elif row.antigen_embedding_type == 'difference':
                 model_name += ' Diff'
+            elif row.antigen_embedding_type == 'mutant_difference':
+                model_name += ' MutDiff'
             else:
                 raise ValueError(f'Antigen embedding type "{row.antigen_embedding_type}" is not supported.')
 
@@ -100,7 +105,6 @@ def get_means_and_stds(results: pd.DataFrame,
         experiment_results = experiment_results[experiment_results['model_type'] != 'likelihood']
 
     # Get model names and results
-    # TODO: is this possible with pandas sort_values
     model_names = np.array([row_to_model_name(row=row, newlines=newlines) for _, row in experiment_results.iterrows()])
     mean_values = experiment_results[f'{metric}_mean'].to_numpy()
     std_values = experiment_results[f'{metric}_std'].to_numpy()
@@ -186,7 +190,7 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
 
             # Save plot
             experiment_save_path = save_dir / task_type / \
-                                  f'cross-split-{task_type}-{metric}{"-limited" if models is not None else ""}.pdf'
+                                   f'cross-split-{task_type}-{metric}{"-limited" if models is not None else ""}.pdf'
             experiment_save_path.parent.mkdir(parents=True, exist_ok=True)
             plt.savefig(experiment_save_path, bbox_inches='tight')
 
@@ -230,13 +234,12 @@ def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Option
 
                     # Save plot
                     experiment_save_path = save_dir / split_type / model_granularity / task_type / \
-                                          f'by-split-{split_type}-{model_granularity}-{task_type}-{metric}' \
-                                          f'{"-limited" if models is not None else ""}.pdf'
+                                           f'by-split-{split_type}-{model_granularity}-{task_type}-{metric}' \
+                                           f'{"-limited" if models is not None else ""}.pdf'
                     experiment_save_path.parent.mkdir(parents=True, exist_ok=True)
                     plt.savefig(experiment_save_path, bbox_inches='tight')
 
 
-# TODO: need to update for attention and antibody embedding granularity
 def plot_results(results_path: Path, save_dir: Path) -> None:
     """Plots the results of multiple experiments.
 
