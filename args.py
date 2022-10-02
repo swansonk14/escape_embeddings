@@ -9,6 +9,7 @@ from constants import (
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
+    DEFAULT_DEVICE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     DEFAULT_RNN_HIDDEN_DIM,
     EMBEDDING_GRANULARITY_OPTIONS,
@@ -60,5 +61,7 @@ class PredictEscapeArgs(Tap):
     """The batch size for the embedding model."""
     skip_existing: bool = False
     """Whether to skip running the code if the save_dir already exists."""
+    device: str = DEFAULT_DEVICE
+    """The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models."""
     verbose: bool = False
     """Whether to print additional debug information."""

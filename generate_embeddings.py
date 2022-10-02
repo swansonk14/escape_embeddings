@@ -12,6 +12,7 @@ from constants import (
     AA_ALPHABET,
     ANTIBODY_CHAINS,
     ANTIBODY_NAME_COLUMN,
+    DEFAULT_DEVICE,
     HEAVY_CHAIN,
     HEAVY_CHAIN_COLUMN,
     LIGHT_CHAIN,
@@ -80,7 +81,8 @@ def generate_esm_embeddings(
         model: ESM2,
         last_layer: int,
         batch_converter: BatchConverter,
-        sequences: list[tuple[str, str]]
+        sequences: list[tuple[str, str]],
+        device: str = DEFAULT_DEVICE
 ) -> dict[str, torch.FloatTensor]:
     """Generate embeddings using an ESM2 model from https://github.com/facebookresearch/esm.
 
@@ -88,16 +90,20 @@ def generate_esm_embeddings(
     :param last_layer: Last layer of the ESM2 model, which will be used to extract embeddings.
     :param batch_converter: A BatchConverter for preparing protein sequences as input.
     :param sequences: A list of tuples of (name, sequence) for the proteins.
+    :param device: The device to use (e.g., "cpu" or "cuda") for the model.
     :return: A dictionary mapping protein name to per-residue ESM2 embedding.
     """
     # Prepare data
     batch_labels, batch_strs, batch_tokens = batch_converter(sequences)
 
+    # Move model to device
+    model = model.to(device)
+
     # Compute embeddings
     start = time()
 
     with torch.no_grad():
-        results = model(batch_tokens, repr_layers=[last_layer], return_contacts=False)
+        results = model(batch_tokens.to(device), repr_layers=[last_layer], return_contacts=False).cpu()
 
     print(f'Time = {time() - start} seconds for {len(sequences):,} sequences')
 
@@ -122,7 +128,8 @@ def generate_embeddings(
         last_layer: int,
         embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
         save_path: Path,
-        antibody_path: Optional[Path] = None
+        antibody_path: Optional[Path] = None,
+        device: str = DEFAULT_DEVICE
 ) -> None:
     """Generate antigen/antibody embeddings using the ESM2 model from https://github.com/facebookresearch/esm.
 
@@ -132,6 +139,7 @@ def generate_embeddings(
     :param embedding_type: Type of embedding to compute. When using antibody embeddings, must provide antibody_path.
     :param save_path: Path to PT file where a dictionary mapping protein name to embeddings will be saved.
     :param antibody_path: Path to a file containing antibody sequences.
+    :param device: The device to use (e.g., "cpu" or "cuda") for the model.
     """
     # Validate parameters
     if 'antibody' in embedding_type and antibody_path is None:
@@ -179,7 +187,8 @@ def generate_embeddings(
         model=model,
         last_layer=last_layer,
         batch_converter=batch_converter,
-        sequences=sequences
+        sequences=sequences,
+        device=device
     )
 
     # Save embeddings
@@ -201,6 +210,7 @@ if __name__ == '__main__':
         """Path to PT file where a dictionary mapping protein name to embeddings will be saved."""
         antibody_path: Optional[Path] = None
         """Path to a file containing antibody sequences."""
-
+        device: str = DEFAULT_DEVICE
+        """The device to use (e.g., "cpu" or "cuda") for the model."""
 
     generate_embeddings(**Args().parse_args().as_dict())

@@ -19,6 +19,7 @@ from constants import (
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
+    DEFAULT_DEVICE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     DEFAULT_NUM_EPOCHS_CROSS_ANTIBODY,
     DEFAULT_NUM_EPOCHS_PER_ANTIBODY,
@@ -108,6 +109,7 @@ def train_and_eval_escape(
         attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
+        device: str = DEFAULT_DEVICE,
         verbose: bool = True
 ) -> dict[str, Optional[float]]:
     """Train and evaluate a model on predicting escape.
@@ -145,9 +147,10 @@ def train_and_eval_escape(
         model = RNNModel(
             task_type=task_type,
             num_epochs=num_epochs,
-            batch_size=batch_size,
             hidden_dim=rnn_hidden_dim,
-            hidden_layer_dims=hidden_layer_dims
+            hidden_layer_dims=hidden_layer_dims,
+            batch_size=batch_size,
+            device=device
         )
     elif model_type == 'likelihood':
         model = LikelihoodModel(task_type=task_type, antigen_likelihoods=antigen_likelihoods)
@@ -163,7 +166,8 @@ def train_and_eval_escape(
             num_epochs=num_epochs,
             batch_size=batch_size,
             hidden_layer_dims=hidden_layer_dims,
-            attention_num_heads=attention_num_heads
+            attention_num_heads=attention_num_heads,
+            device=device
         )
     else:
         raise ValueError(f'Model type "{model_type}" is not supported.')
@@ -229,6 +233,7 @@ def predict_escape(
         attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
         num_epochs: Optional[int] = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
+        device: str = DEFAULT_DEVICE,
         verbose: bool = False
 ) -> None:
     """Train a model to predict antigen escape using ESM2 embeddings."""
@@ -342,6 +347,7 @@ def predict_escape(
             attention_num_heads=attention_num_heads,
             num_epochs=num_epochs,
             batch_size=batch_size,
+            device=device,
             verbose=verbose
         )
         for fold in tqdm(folds, desc='Folds')

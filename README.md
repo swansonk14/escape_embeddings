@@ -15,6 +15,11 @@ Activate conda environment.
 conda activate escape_embeddings
 ```
 
+If using a GPU, please also run the following:
+```bash
+conda install -c anaconda cudatoolkit
+```
+
 
 ## Data
 

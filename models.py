@@ -15,6 +15,7 @@ from constants import (
     ANTIGEN_EMBEDDING_TYPE_OPTIONS,
     DEFAULT_ATTENTION_NUM_HEADS,
     DEFAULT_BATCH_SIZE,
+    DEFAULT_DEVICE,
     DEFAULT_HIDDEN_LAYER_DIMS,
     EMBEDDING_GRANULARITY_OPTIONS,
     HEAVY_CHAIN,
@@ -292,7 +293,8 @@ class PyTorchEscapeModel(EscapeModel):
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
                  num_epochs: int,
-                 batch_size: int) -> None:
+                 batch_size: int,
+                 device: str) -> None:
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
@@ -301,6 +303,7 @@ class PyTorchEscapeModel(EscapeModel):
 
         self.num_epochs = num_epochs
         self.batch_size = batch_size
+        self.device = device
 
         # Ensure PyTorch reproducibility
         torch.manual_seed(0)
@@ -342,7 +345,7 @@ class PyTorchEscapeModel(EscapeModel):
             sites: list[int],
             wildtypes: list[str],
             mutants: list[str],
-            escapes: list[float]) -> 'PyTorchModel':
+            escapes: list[float]) -> 'PyTorchEscapeModel':
         """Fits the model on the training escape data.
 
         :param antibodies: A list of antibodies.
@@ -375,6 +378,9 @@ class PyTorchEscapeModel(EscapeModel):
         for _ in trange(self.num_epochs, desc='Epochs', leave=False):
             for batch_data, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
                 self.core_model.zero_grad()
+
+                batch_data = batch_data.to(self.device)
+                batch_escape = batch_escape.to(self.device)
 
                 preds = self.core_model(batch_data)
 
@@ -418,8 +424,9 @@ class PyTorchEscapeModel(EscapeModel):
 
         with torch.no_grad():
             for batch_embeddings, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
+                batch_data = batch_data.to(self.device)
                 preds = self.core_model(batch_embeddings)
-                all_preds.append(preds.numpy())
+                all_preds.append(preds.cpu().numpy())
 
         all_preds = np.concatenate(all_preds)
 
@@ -562,7 +569,8 @@ class EmbeddingModel(PyTorchEscapeModel):
                  antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
                  attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
-                 batch_size: int = DEFAULT_BATCH_SIZE) -> None:
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 device: str = DEFAULT_DEVICE) -> None:
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
@@ -571,7 +579,8 @@ class EmbeddingModel(PyTorchEscapeModel):
         super(EmbeddingModel, self).__init__(
             task_type=task_type,
             num_epochs=num_epochs,
-            batch_size=batch_size
+            batch_size=batch_size,
+            device=device
         )
 
         if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
@@ -629,7 +638,7 @@ class EmbeddingModel(PyTorchEscapeModel):
             input_dim=self.input_dim,
             hidden_layer_dims=self.hidden_layer_dims,
             attention_num_heads=self.attention_num_heads
-        )
+        ).to(self.device)
 
         # Create optimizer
         self._optimizer = torch.optim.Adam(self.core_model.parameters())
@@ -793,9 +802,10 @@ class RNNModel(PyTorchEscapeModel):
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
                  num_epochs: int,
-                 batch_size: int,
                  hidden_dim: int,
-                 hidden_layer_dims: tuple[int, ...]) -> None:
+                 hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 device: str = DEFAULT_DEVICE) -> None:
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
@@ -804,7 +814,8 @@ class RNNModel(PyTorchEscapeModel):
         super(RNNModel, self).__init__(
             task_type=task_type,
             num_epochs=num_epochs,
-            batch_size=batch_size
+            batch_size=batch_size,
+            device=device
         )
 
         self.hidden_dim = hidden_dim
@@ -814,7 +825,7 @@ class RNNModel(PyTorchEscapeModel):
         self._core_model = RNNCoreModel(
             hidden_dim=self.hidden_dim,
             hidden_layer_dims=self.hidden_layer_dims
-        )
+        ).to(self.device)
 
         # Create optimizer
         self._optimizer = torch.optim.Adam(self.core_model.parameters())
