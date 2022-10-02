@@ -307,7 +307,6 @@ class PyTorchEscapeModel(EscapeModel):
 
         # Ensure PyTorch reproducibility
         torch.manual_seed(0)
-        torch.use_deterministic_algorithms(True)
 
         # Create loss function
         if self.task_type == 'classification':

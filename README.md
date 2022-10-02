@@ -5,7 +5,7 @@ Modeling SARS-CoV-2 antigen escape from antibodies using pretrained protein lang
 
 ## Installation
 
-Install conda environment.
+Install conda environment. If using GPU, first open `environment.yml` and uncomment the line with `cudatoolkit=11.3`.
 ```bash
 conda env create -f environment.yml
 ```
@@ -13,11 +13,6 @@ conda env create -f environment.yml
 Activate conda environment.
 ```bash
 conda activate escape_embeddings
-```
-
-If using a GPU, please also run the following:
-```bash
-conda install -c anaconda cudatoolkit
 ```
 
 
