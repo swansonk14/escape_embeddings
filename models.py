@@ -772,6 +772,9 @@ class RNNCoreModel(nn.Module):
 
     def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
         """TODO: docstring"""
+        # Extract mutation sites
+        site_indices, x = x[0], x[1:]
+
         # Get batch size
         batch_size = x.shape[1]
 
@@ -779,8 +782,8 @@ class RNNCoreModel(nn.Module):
         x = self.embeddings(x)
 
         # Run RNN
-        output, (hidden, cell) = self.rnn(x)  # hidden: (2, batch_size, hidden_dim)
-        x = torch.transpose(hidden, 0, 1).reshape(batch_size, -1)  # (batch_size, 2 * hidden_dim)
+        output, _ = self.rnn(x)  # (sequence_length, batch_size, 2 * hidden_dim)
+        x = output[site_indices, torch.arange(batch_size)]
 
         # Apply MLP
         x = self.mlp(x)
@@ -865,6 +868,9 @@ class RNNModel(PyTorchEscapeModel):
 
         # Stack mutant sequence indices as (sequence_length, num_sequences)
         batch_data = torch.stack(all_mutant_indices).transpose(1, 0)
+
+        # Add the index of the mutation as the first dimension
+        batch_data = torch.cat((site_indices.unsqueeze(dim=0), batch_data))
 
         # Convert escape scores to FloatTensor
         if escapes[0] is not None:
