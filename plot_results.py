@@ -16,12 +16,12 @@ from constants import (
 
 LIMITED_MODELS = [
     'Mutation', 'Site', 'RNN', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff',
-    'Antigen Res Mut', 'Antigen Res MutDiff', 'Antigen Res Mut + Antibody', 'Antigen Res Mut Att Antibody'
+    'Antigen Seq MutDiff', 'Antigen Res Mut', 'Antigen Res Mut + Antibody', 'Antigen Res Mut Att Antibody'
 ]
 MODEL_ORDER = [
     'Mutation', 'Site', 'RNN', 'Likelihood',
-    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Res Mut', 'Antigen Res Diff',
-    'Antigen Seq MutDiff', 'Antigen Res MutDiff',
+    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
+    'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
     'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
     'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
     'Antigen Res Mut Att Antibody'
