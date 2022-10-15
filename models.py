@@ -374,6 +374,7 @@ class PyTorchEscapeModel(EscapeModel):
         )
 
         # Train
+        self.core_model.train()
         for _ in trange(self.num_epochs, desc='Epochs', leave=False):
             for batch_data, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
                 self.core_model.zero_grad()
@@ -421,6 +422,7 @@ class PyTorchEscapeModel(EscapeModel):
         # Predict
         all_preds = []
 
+        self.core_model.eval()
         with torch.no_grad():
             for batch_data, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
                 batch_data = batch_data.to(self.device)
