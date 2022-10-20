@@ -88,7 +88,8 @@ python generate_embeddings.py \
     --last_layer 33 \
     --embedding_type antibody-antigen \
     --save_path embeddings/antibody_antigen_embeddings.pt \
-    --antibody_path data/antibodies.csv
+    --antibody_path data/antibodies.csv \
+    --average_embeddings
 ```
 
 

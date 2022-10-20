@@ -13,6 +13,7 @@ from constants import (
     AA_ALPHABET,
     ANTIBODY_CHAINS,
     ANTIBODY_NAME_COLUMN,
+    DEFAULT_BATCH_SIZE,
     DEFAULT_DEVICE,
     HEAVY_CHAIN,
     HEAVY_CHAIN_COLUMN,
@@ -83,8 +84,9 @@ def generate_esm_embeddings(
         last_layer: int,
         batch_converter: BatchConverter,
         sequences: list[tuple[str, str]],
+        average_embeddings: bool = False,
         device: str = DEFAULT_DEVICE,
-        batch_size: int = 100
+        batch_size: int = DEFAULT_BATCH_SIZE
 ) -> dict[str, torch.FloatTensor]:
     """Generate embeddings using an ESM2 model from https://github.com/facebookresearch/esm.
 
@@ -92,6 +94,7 @@ def generate_esm_embeddings(
     :param last_layer: Last layer of the ESM2 model, which will be used to extract embeddings.
     :param batch_converter: A BatchConverter for preparing protein sequences as input.
     :param sequences: A list of tuples of (name, sequence) for the proteins.
+    :param average_embeddings: Whether to average the residue embeddings for each protein.
     :param device: The device to use (e.g., "cpu" or "cuda") for the model.
     :param batch_size: The number of sequences to process at once.
     :return: A dictionary mapping protein name to per-residue ESM2 embedding.
@@ -101,32 +104,34 @@ def generate_esm_embeddings(
 
     # Compute all embeddings
     start = time()
-    embeddings = []
+    name_to_embedding = {}
 
     with torch.no_grad():
         # Iterate over batches of sequences
         for i in trange(0, len(sequences), batch_size):
             # Get batch of sequences
-            batch_labels, batch_strs, batch_tokens = batch_converter(sequences[i:i + batch_size])
+            batch_sequences = sequences[i:i + batch_size]
+            batch_labels, batch_strs, batch_tokens = batch_converter(batch_sequences)
             batch_tokens = batch_tokens.to(device)
 
             # Compute embeddings
-            results = model(batch_tokens.to(device), repr_layers=[last_layer], return_contacts=False)
+            results = model(batch_tokens, repr_layers=[last_layer], return_contacts=False)
 
-            # Append per-residue embeddings
-            embeddings.append(results['representations'][last_layer].cpu())
+            # Get per-residue embeddings
+            batch_embeddings = results['representations'][last_layer].cpu()
+
+            # Map sequence name to embedding
+            for (name, sequence), embedding in zip(batch_sequences, batch_embeddings):
+                # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1
+                embedding = embedding[1:len(sequence) + 1]
+
+                # Optionally average embeddings for each sequence
+                if average_embeddings:
+                    embedding = embedding.mean(dim=0)
+
+                name_to_embedding[name] = embedding
 
     print(f'Time = {time() - start} seconds for {len(sequences):,} sequences')
-
-    # Flatten embeddings
-    embeddings = torch.cat(embeddings, dim=0)
-
-    # Map sequence name to embedding
-    # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
-    name_to_embedding = {
-        name: embedding[1: len(sequence) + 1]
-        for (name, sequence), embedding in zip(sequences, embeddings)
-    }
 
     assert len(sequences) == len(name_to_embedding)
 
@@ -139,8 +144,10 @@ def generate_embeddings(
         last_layer: int,
         embedding_type: Literal['antigen', 'antibody', 'antibody-antigen'],
         save_path: Path,
+        average_embeddings: bool = False,
         antibody_path: Optional[Path] = None,
-        device: str = DEFAULT_DEVICE
+        device: str = DEFAULT_DEVICE,
+        batch_size: int = DEFAULT_BATCH_SIZE
 ) -> None:
     """Generate antigen/antibody embeddings using the ESM2 model from https://github.com/facebookresearch/esm.
 
@@ -148,9 +155,11 @@ def generate_embeddings(
     :param esm_model: Pretrained ESM2 model to use. See options at https://github.com/facebookresearch/esm.
     :param last_layer: Last layer of the ESM2 model, which will be used to extract embeddings.
     :param embedding_type: Type of embedding to compute. When using antibody embeddings, must provide antibody_path.
+    :param average_embeddings: Whether to average the residue embeddings for each protein.
     :param save_path: Path to PT file where a dictionary mapping protein name to embeddings will be saved.
     :param antibody_path: Path to a file containing antibody sequences.
     :param device: The device to use (e.g., "cpu" or "cuda") for the model.
+    :param batch_size: The number of sequences to process at once.
     """
     # Validate parameters
     if 'antibody' in embedding_type and antibody_path is None:
@@ -199,7 +208,9 @@ def generate_embeddings(
         last_layer=last_layer,
         batch_converter=batch_converter,
         sequences=sequences,
-        device=device
+        average_embeddings=average_embeddings,
+        device=device,
+        batch_size=batch_size
     )
 
     # Save embeddings
@@ -219,9 +230,13 @@ if __name__ == '__main__':
         """Type of embedding to compute. When using antibody embeddings, must provide antibody_path."""
         save_path: Path
         """Path to PT file where a dictionary mapping protein name to embeddings will be saved."""
+        average_embeddings: bool = False
+        """Whether to average the residue embeddings for each protein."""
         antibody_path: Optional[Path] = None
         """Path to a file containing antibody sequences."""
         device: str = DEFAULT_DEVICE
         """The device to use (e.g., "cpu" or "cuda") for the model."""
+        batch_size: int = DEFAULT_BATCH_SIZE
+        """The number of sequences to process at once."""
 
     generate_embeddings(**Args().parse_args().as_dict())
