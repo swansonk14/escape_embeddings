@@ -80,7 +80,7 @@ python generate_embeddings.py \
     --antibody_path data/antibodies.csv
 ```
 
-Antigen embeddings
+Antibody-antigen embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \

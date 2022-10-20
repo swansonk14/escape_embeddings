@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from esm import Alphabet, BatchConverter, ESM2
 from tap import Tap
+from tqdm import trange
 
 from constants import (
     AA_ALPHABET,
@@ -82,7 +83,8 @@ def generate_esm_embeddings(
         last_layer: int,
         batch_converter: BatchConverter,
         sequences: list[tuple[str, str]],
-        device: str = DEFAULT_DEVICE
+        device: str = DEFAULT_DEVICE,
+        batch_size: int = 100
 ) -> dict[str, torch.FloatTensor]:
     """Generate embeddings using an ESM2 model from https://github.com/facebookresearch/esm.
 
@@ -91,24 +93,33 @@ def generate_esm_embeddings(
     :param batch_converter: A BatchConverter for preparing protein sequences as input.
     :param sequences: A list of tuples of (name, sequence) for the proteins.
     :param device: The device to use (e.g., "cpu" or "cuda") for the model.
+    :param batch_size: The number of sequences to process at once.
     :return: A dictionary mapping protein name to per-residue ESM2 embedding.
     """
-    # Prepare data
-    batch_labels, batch_strs, batch_tokens = batch_converter(sequences)
-
     # Move model to device
     model = model.to(device)
 
-    # Compute embeddings
+    # Compute all embeddings
     start = time()
+    embeddings = []
 
     with torch.no_grad():
-        results = model(batch_tokens.to(device), repr_layers=[last_layer], return_contacts=False).cpu()
+        # Iterate over batches of sequences
+        for i in trange(0, len(sequences), batch_size):
+            # Get batch of sequences
+            batch_labels, batch_strs, batch_tokens = batch_converter(sequences[i:i + batch_size])
+            batch_tokens = batch_tokens.to(device)
+
+            # Compute embeddings
+            results = model(batch_tokens.to(device), repr_layers=[last_layer], return_contacts=False)
+
+            # Append per-residue embeddings
+            embeddings.append(results['representations'][last_layer].cpu())
 
     print(f'Time = {time() - start} seconds for {len(sequences):,} sequences')
 
-    # Get per-residue embeddings
-    embeddings = results['representations'][last_layer]
+    # Flatten embeddings
+    embeddings = torch.cat(embeddings, dim=0)
 
     # Map sequence name to embedding
     # NOTE: token 0 is always a beginning-of-sequence token, so the first residue is token 1.
