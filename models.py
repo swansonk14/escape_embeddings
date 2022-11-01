@@ -589,7 +589,7 @@ class EmbeddingModel(PyTorchEscapeModel):
             raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                       f'has not been implemented yet.')
 
-        assert (antibody_embeddings is None) == (antibody_embedding_type != 'one_hot')
+        assert (antibody_embeddings is None) == (antibody_embedding_type in {None, 'one_hot'})
 
         self.antigen_embeddings = antigen_embeddings
         self.antigen_embedding_granularity = antigen_embedding_granularity
