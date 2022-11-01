@@ -63,7 +63,7 @@ TASK_TYPE_OPTIONS = Literal['classification', 'regression']
 SPLIT_TYPE_OPTIONS = Literal['mutation', 'site', 'antibody', 'antibody_group']
 EMBEDDING_GRANULARITY_OPTIONS = Literal['sequence', 'residue']
 ANTIGEN_EMBEDDING_TYPE_OPTIONS = Literal['mutant', 'difference', 'mutant_difference', 'linker']
-ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention', 'one-hot']
+ANTIBODY_EMBEDDING_TYPE_OPTIONS = Literal['concatenation', 'attention', 'one_hot']
 
 # Model constants
 DEFAULT_ATTENTION_NUM_HEADS = 8
