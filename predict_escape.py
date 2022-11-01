@@ -106,6 +106,7 @@ def train_and_eval_escape(
         antibody_embeddings: Optional[dict[str, torch.FloatTensor]] = None,
         antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None,
         antibody_embedding_type: Optional[ANTIBODY_EMBEDDING_TYPE_OPTIONS] = None,
+        unique_antibodies: Optional[list[str]] = None,
         hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
         rnn_hidden_dim: int = DEFAULT_RNN_HIDDEN_DIM,
         attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS,
@@ -165,6 +166,7 @@ def train_and_eval_escape(
             antibody_embeddings=antibody_embeddings,
             antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
+            unique_antibodies=unique_antibodies,
             num_epochs=num_epochs,
             batch_size=batch_size,
             hidden_layer_dims=hidden_layer_dims,
@@ -267,9 +269,10 @@ def predict_escape(
                and antigen_embedding_granularity is None and antibody_embeddings_path is None and num_epochs is None
 
     if antibody_embeddings_path is not None:
-        assert antibody_embedding_type is not None and antibody_embedding_granularity is not None
+        assert antibody_embedding_type is not None and antibody_embedding_type != 'one-hot' \
+               and antibody_embedding_granularity is not None
     else:
-        assert antibody_embedding_type is None and antibody_embedding_granularity is None
+        assert antibody_embedding_type in {None, 'one-hot'} and antibody_embedding_granularity is None
 
     if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
         raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
@@ -350,6 +353,7 @@ def predict_escape(
             antibody_embeddings=antibody_embeddings,
             antibody_embedding_granularity=antibody_embedding_granularity,
             antibody_embedding_type=antibody_embedding_type,
+            unique_antibodies=unique_antibodies,
             hidden_layer_dims=hidden_layer_dims,
             rnn_hidden_dim=rnn_hidden_dim,
             attention_num_heads=attention_num_heads,
