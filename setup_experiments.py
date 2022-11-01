@@ -21,6 +21,7 @@ def run_experiments(
         antigen_likelihoods_path: str,
         antigen_embeddings_path: str,
         antibody_embeddings_path: str,
+        antigen_antibody_embeddings_path: str,
         experiment_save_dir: Path,
         bash_save_path: Path,
         skip_existing: bool = False,
@@ -55,15 +56,24 @@ def run_experiments(
                         experiment_args += ['--antigen_likelihoods_path', antigen_likelihoods_path]
 
                     if model_type == 'embedding':
-                        experiment_args += ['--antigen_embeddings_path', antigen_embeddings_path]
-
                         antigen_experiment_args = []
                         for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                             for antigen_embedding_type in get_args(ANTIGEN_EMBEDDING_TYPE_OPTIONS):
-                                antigen_experiment_args.append(experiment_args + [
-                                    '--antigen_embedding_granularity', antigen_embedding_granularity,
-                                    '--antigen_embedding_type', antigen_embedding_type
-                                ])
+                                if antigen_embedding_type == 'linker':
+                                    if antigen_embedding_granularity == 'sequence':
+                                        antigen_experiment_args.append(experiment_args + [
+                                            '--antigen_embedding_granularity', antigen_embedding_granularity,
+                                            '--antigen_embedding_type', antigen_embedding_type,
+                                            '--antigen_embeddings_path', antigen_antibody_embeddings_path
+                                        ])
+                                    else:
+                                        continue
+                                else:
+                                    antigen_experiment_args.append(experiment_args + [
+                                        '--antigen_embedding_granularity', antigen_embedding_granularity,
+                                        '--antigen_embedding_type', antigen_embedding_type,
+                                        '--antigen_embeddings_path', antigen_embeddings_path
+                                    ])
 
                         antibody_experiments_args = []
                         for experiment_args in antigen_experiment_args:
@@ -124,6 +134,8 @@ if __name__ == '__main__':
         """Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding."""
         antibody_embeddings_path: str
         """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
+        antigen_antibody_embeddings_path: str
+        """Path to PT file containing a dictionary mapping from antibody name_chain and antigen name to ESM2 embedding."""
         experiment_save_dir: Path
         """Path to directory where all the experiment results will be saved."""
         bash_save_path: Path

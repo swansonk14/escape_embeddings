@@ -24,7 +24,7 @@ MODEL_ORDER = [
     'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
     'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
     'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
-    'Antigen Res Mut Att Antibody'
+    'Antigen Res Mut Att Antibody', 'Antigen Seq Linker Antibody'
 ]
 MODEL_NAME_TO_ORDER = {
     model_name: index
@@ -58,6 +58,8 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
                 model_name += ' Diff'
             elif row.antigen_embedding_type == 'mutant_difference':
                 model_name += ' MutDiff'
+            elif row.antigen_embedding_type == 'linker':
+                model_name += ' Linker Antibody'
             else:
                 raise ValueError(f'Antigen embedding type "{row.antigen_embedding_type}" is not supported.')
 

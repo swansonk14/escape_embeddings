@@ -275,6 +275,9 @@ def predict_escape(
         raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                   f'has not been implemented yet.')
 
+    if args.antigen_embedding_type == 'linker':
+        assert args.antigen_embedding_granularity == 'sequence' and args.antibody_embedding_type is None
+
     if model_type in {'rnn', 'embedding'} and num_epochs is None:
         if model_granularity == 'per-antibody':
             num_epochs = DEFAULT_NUM_EPOCHS_PER_ANTIBODY
