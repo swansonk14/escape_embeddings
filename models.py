@@ -613,7 +613,7 @@ class EmbeddingModel(PyTorchEscapeModel):
             self.antibody_embedding_dim = None
 
         # Optionally compute average sequence embeddings
-        if self.antigen_embedding_granularity == 'sequence':
+        if self.antigen_embedding_granularity == 'sequence' and self.antigen_embedding_type != 'linker':
             self.antigen_embeddings = {
                 name: embedding.mean(dim=0)
                 for name, embedding in self.antigen_embeddings.items()
