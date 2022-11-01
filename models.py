@@ -645,7 +645,7 @@ class EmbeddingModel(PyTorchEscapeModel):
         self.input_dim = num_antigen_embeddings * self.antigen_embedding_dim
 
         if self.antibody_embeddings is not None:
-            self.input_dim += 2 * self.antibody_embedding_dim  # heavy and light chain
+            self.input_dim += (1 + (self.antibody_embedding_type != 'one_hot')) * self.antibody_embedding_dim  # heavy and light chain
 
         # Create core model
         self._core_model = EmbeddingCoreModel(
