@@ -589,7 +589,7 @@ class EmbeddingModel(PyTorchEscapeModel):
             raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
                                       f'has not been implemented yet.')
 
-        assert (antibody_embeddings is None) == (antibody_embedding_type != 'one-hot')
+        assert (antibody_embeddings is None) == (antibody_embedding_type != 'one_hot')
 
         self.antigen_embeddings = antigen_embeddings
         self.antigen_embedding_granularity = antigen_embedding_granularity
@@ -626,7 +626,7 @@ class EmbeddingModel(PyTorchEscapeModel):
             }
 
         # Set up one-hot antibody embeddings
-        if self.antibody_embedding_type == 'one-hot':
+        if self.antibody_embedding_type == 'one_hot':
             eye_matrix = torch.eye(len(self.unique_antibodies))
             self.antibody_embeddings = {
                 antibody: eye_matrix[index]
@@ -725,7 +725,7 @@ class EmbeddingModel(PyTorchEscapeModel):
 
         # Optionally add antibody embeddings to antigen embeddings
         if self.antibody_embeddings is not None:
-            if self.antibody_embedding_type == 'one-hot':
+            if self.antibody_embedding_type == 'one_hot':
                 batch_antibody_embeddings = torch.stack([
                     self.antibody_embeddings[antibody]
                     for antibody in antibodies

@@ -269,10 +269,10 @@ def predict_escape(
                and antigen_embedding_granularity is None and antibody_embeddings_path is None and num_epochs is None
 
     if antibody_embeddings_path is not None:
-        assert antibody_embedding_type is not None and antibody_embedding_type != 'one-hot' \
+        assert antibody_embedding_type is not None and antibody_embedding_type != 'one_hot' \
                and antibody_embedding_granularity is not None
     else:
-        assert antibody_embedding_type in {None, 'one-hot'} and antibody_embedding_granularity is None
+        assert antibody_embedding_type in {None, 'one_hot'} and antibody_embedding_granularity is None
 
     if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
         raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
