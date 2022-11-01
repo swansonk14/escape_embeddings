@@ -84,9 +84,11 @@ def run_experiments(
 
                                     antibody_experiments_args.append(experiment_args + [
                                         '--antibody_embedding_granularity', antibody_embedding_granularity,
-                                        '--antibody_embedding_type', antibody_embedding_type,
-                                        '--antibody_embeddings_path', antibody_embeddings_path
-                                    ])
+                                        '--antibody_embedding_type', antibody_embedding_type
+                                    ] + (['--antibody_embeddings_path', antibody_embeddings_path]
+                                         if antibody_embedding_type != 'one_hot' else [])
+                                    )
+
                         experiments_args = antigen_experiment_args + antibody_experiments_args
                     else:
                         experiments_args = [experiment_args]
@@ -144,5 +146,6 @@ if __name__ == '__main__':
         """The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models."""
         skip_existing: bool = False
         """Whether to skip running the code if the save_dir already exists."""
+
 
     run_experiments(**Args().parse_args().as_dict())

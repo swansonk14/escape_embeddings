@@ -22,6 +22,7 @@ MODEL_ORDER = [
     'Mutation', 'Site', 'RNN', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
     'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
+    'Antigen Res Mut + Antibody One-Hot',
     'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
     'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
     'Antigen Res Mut Att Antibody', 'Antigen Seq Linker Antibody'
@@ -68,6 +69,8 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
                 model_name += f' +{whitespace}Antibody'
             elif row.antibody_embedding_type == 'attention':
                 model_name += f' Att{whitespace}Antibody'
+            elif row.antibody_embedding_type == 'one_hot':
+                model_name += f' +{whitespace}Antibody One-Hot'
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
     elif row.model_type == 'rnn':
