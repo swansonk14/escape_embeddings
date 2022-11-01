@@ -632,6 +632,7 @@ class EmbeddingModel(PyTorchEscapeModel):
                 antibody: eye_matrix[index]
                 for index, antibody in enumerate(self.unique_antibodies)
             }
+            self.antibody_embedding_dim = len(self.unique_antibodies)
 
         # Get wildtype embedding
         if self.antigen_embedding_type in {'difference', 'mutant_difference'}:
