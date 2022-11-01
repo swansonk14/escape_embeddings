@@ -624,7 +624,10 @@ class EmbeddingModel(PyTorchEscapeModel):
             }
 
         # Get wildtype embedding
-        self.wildtype_embedding = self.antigen_embeddings['wildtype']
+        if self.antigen_embedding_type in {'difference', 'mutant_difference'}:
+            self.wildtype_embedding = self.antigen_embeddings['wildtype']
+        else:
+            self.wildtype_embedding = None
 
         # Set up input and output dims
         num_antigen_embeddings = (1 + (self.antigen_embedding_type in {'mutant_difference', 'linker'}))
