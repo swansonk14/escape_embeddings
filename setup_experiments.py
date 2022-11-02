@@ -79,7 +79,12 @@ def run_experiments(
                         for experiment_args in antigen_experiment_args:
                             for antibody_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                                 for antibody_embedding_type in get_args(ANTIBODY_EMBEDDING_TYPE_OPTIONS):
-                                    if antibody_embedding_granularity == 'residue':
+                                    if antibody_embedding_type == 'concatenation' \
+                                            and antibody_embedding_granularity == 'residue':
+                                        continue
+
+                                    if antibody_embedding_type == 'attention' \
+                                            and antibody_embedding_granularity == 'sequence':
                                         continue
 
                                     antibody_experiments_args.append(experiment_args + [

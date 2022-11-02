@@ -274,9 +274,10 @@ def predict_escape(
     else:
         assert antibody_embedding_type in {None, 'one_hot'} and antibody_embedding_granularity is None
 
-    if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
-        raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
-                                  f'has not been implemented yet.')
+    if antibody_embedding_type == 'concatenation':
+        assert antibody_embedding_granularity == 'sequence'
+    elif antibody_embedding_type == 'attention':
+        assert antibody_embedding_granularity == 'residue' and antigen_embedding_granularity == 'residue'
 
     if args.antigen_embedding_type == 'linker':
         assert args.antigen_embedding_granularity == 'sequence' and args.antibody_embedding_type is None

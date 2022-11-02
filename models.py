@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm, trange
 
@@ -379,7 +380,11 @@ class PyTorchEscapeModel(EscapeModel):
             for batch_data, batch_escape in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
                 self.core_model.zero_grad()
 
-                batch_data = batch_data.to(self.device)
+                if isinstance(batch_data, tuple):
+                    batch_data = tuple(tensor.to(self.device) for tensor in batch_data)
+                else:
+                    batch_data = batch_data.to(self.device)
+
                 batch_escape = batch_escape.to(self.device)
 
                 preds = self.core_model(batch_data)
@@ -518,16 +523,20 @@ class EmbeddingCoreModel(nn.Module):
 
         # Create attention model
         if self.antibody_attention:
+            self.embed_dim = self.input_dim // 3
             self.attention = nn.MultiheadAttention(
-                embed_dim=self.input_dim // 3,
-                num_heads=self.attention_num_heads
+                embed_dim=self.embed_dim,
+                num_heads=self.attention_num_heads,
+                batch_first=True
             )
+            mlp_input_dim = self.embed_dim * 2
         else:
-            self.attention = None
+            self.attention = self.embed_dim = None
+            mlp_input_dim = self.input_dim
 
         # Create MLP model
         self.mlp = MLP(
-            input_dim=self.input_dim,
+            input_dim=mlp_input_dim,
             output_dim=self.output_dim,
             hidden_layer_dims=self.hidden_layer_dims
         )
@@ -539,9 +548,17 @@ class EmbeddingCoreModel(nn.Module):
         """TODO: docstring"""
         # Apply attention
         if self.antibody_attention:
-            batch_size = x.shape[1]
-            x, x_weights = self.attention(x, x, x)  # (3, batch_size, embedding_size), (batch_size, 3, 3)
-            x = torch.transpose(x, 0, 1).reshape(batch_size, -1)  # (batch_size, 3 * embedding_size)
+            antigen_embeddings, antibody_heavy_embeddings, antibody_light_embeddings = x
+            antigen_heavy_embeddings, _ = self.attention(
+                antigen_embeddings, antibody_heavy_embeddings, antibody_heavy_embeddings
+            )  # (batch_size, antigen_len, embedding_size)
+            antigen_light_embeddings, _ = self.attention(
+                antigen_embeddings, antibody_light_embeddings, antibody_light_embeddings
+            )  # (batch_size, antigen_len, embedding_size)
+            x = torch.cat(
+                (antigen_heavy_embeddings.mean(dim=1), antigen_light_embeddings.mean(dim=1)),
+                dim=-1
+            )  # (batch_size, 2 * embedding_size)
 
         # Apply MLP
         x = self.mlp(x)
@@ -584,10 +601,6 @@ class EmbeddingModel(PyTorchEscapeModel):
             batch_size=batch_size,
             device=device
         )
-
-        if antibody_embedding_granularity is not None and antibody_embedding_granularity != 'sequence':
-            raise NotImplementedError(f'Antibody embedding granularity "{antibody_embedding_granularity}" '
-                                      f'has not been implemented yet.')
 
         assert (antibody_embeddings is None) == (antibody_embedding_type in {None, 'one_hot'})
 
@@ -670,7 +683,7 @@ class EmbeddingModel(PyTorchEscapeModel):
         return self._optimizer
 
     def collate_batch(self, input_tuples: list[tuple[str, int, str, Optional[float]]]
-                      ) -> tuple[torch.FloatTensor, Optional[torch.FloatTensor]]:
+                      ) -> tuple[torch.FloatTensor | tuple[torch.FloatTensor, ...], Optional[torch.FloatTensor]]:
         """Collate antibody and/or antigen embeddings and escape scores for input to the model.
 
         :param input_tuples: A list of tuples of antibody, site, mutation, and escape score (if available).
@@ -697,9 +710,12 @@ class EmbeddingModel(PyTorchEscapeModel):
                 (batch_antibody_antigen_heavy_embeddings, batch_antibody_antigen_light_embeddings), dim=1
             )
         else:
+            index_into_antigen_embeddings = self.antigen_embedding_granularity == 'residue' \
+                                            and self.antibody_embedding_type != 'attention'
+
             batch_antigen_mutant_embeddings = torch.stack([
                 self.antigen_embeddings[f'{site}_{mutant}'][
-                    site_index if self.antigen_embedding_granularity == 'residue' else slice(None)
+                    site_index if index_into_antigen_embeddings else slice(None)
                 ]
                 for site, mutant, site_index in zip(sites, mutants, site_indices)
             ])
@@ -710,14 +726,14 @@ class EmbeddingModel(PyTorchEscapeModel):
             elif self.antigen_embedding_type in {'difference', 'mutant_difference'}:
                 batch_difference_embeddings = (
                         batch_antigen_mutant_embeddings
-                        - self.wildtype_embedding[site_indices if self.antigen_embedding_granularity == 'residue' else slice(None)]
+                        - self.wildtype_embedding[site_indices if index_into_antigen_embeddings else slice(None)]
                 )
 
                 if self.antigen_embedding_type == 'difference':
                     batch_antigen_embeddings = batch_difference_embeddings
                 elif self.antigen_embedding_type == 'mutant_difference':
                     batch_antigen_embeddings = torch.cat(
-                        (batch_antigen_mutant_embeddings, batch_difference_embeddings), dim=1
+                        (batch_antigen_mutant_embeddings, batch_difference_embeddings), dim=-1
                     )
                 else:
                     raise ValueError(f'Antigen embedding type "{self.antigen_embedding_type}" is not supported.')
@@ -733,23 +749,21 @@ class EmbeddingModel(PyTorchEscapeModel):
                 ])
                 batch_embeddings = torch.cat((batch_antigen_embeddings, batch_antibody_embeddings), dim=1)
             else:
-                batch_antibody_heavy_embeddings = torch.stack([
-                    self.antibody_embeddings[f'{antibody}_{HEAVY_CHAIN}']
-                    for antibody in antibodies
-                ])
-                batch_antibody_light_embeddings = torch.stack([
-                    self.antibody_embeddings[f'{antibody}_{LIGHT_CHAIN}']
-                    for antibody in antibodies
-                ])
+                batch_antibody_heavy_embeddings = pad_sequence(
+                    [self.antibody_embeddings[f'{antibody}_{HEAVY_CHAIN}'] for antibody in antibodies],
+                    batch_first=True
+                )
+                batch_antibody_light_embeddings = pad_sequence(
+                    [self.antibody_embeddings[f'{antibody}_{LIGHT_CHAIN}'] for antibody in antibodies],
+                    batch_first=True
+                )
 
                 if self.antibody_embedding_type == 'concatenation':
                     batch_embeddings = torch.cat(
                         (batch_antigen_embeddings, batch_antibody_heavy_embeddings, batch_antibody_light_embeddings), dim=1
                     )
                 elif self.antibody_embedding_type == 'attention':
-                    batch_embeddings = torch.stack(
-                        (batch_antigen_embeddings, batch_antibody_heavy_embeddings, batch_antibody_light_embeddings)
-                    )
+                    batch_embeddings = (batch_antigen_embeddings, batch_antibody_heavy_embeddings, batch_antibody_light_embeddings)
                 else:
                     raise ValueError(f'Antibody embedding type "{self.antibody_embedding_type} is not supported.')
         else:
