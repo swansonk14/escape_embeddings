@@ -12,7 +12,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_mutation_per_antibody \
+    --save_dir results/attention_mutation_per_antibody_residue \
     --device cuda \
     --skip_existing
 
@@ -28,7 +28,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_site_per_antibody \
+    --save_dir results/attention_site_per_antibody_residue \
     --device cuda \
     --skip_existing
 
@@ -44,7 +44,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_mutation_cross_antibody \
+    --save_dir results/attention_mutation_cross_antibody_residue \
     --device cuda \
     --skip_existing
 
@@ -60,7 +60,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_site_cross_antibody \
+    --save_dir results/attention_site_cross_antibody_residue \
     --device cuda \
     --skip_existing
 
@@ -76,7 +76,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_antibody_cross_antibody \
+    --save_dir results/attention_antibody_cross_antibody_residue \
     --device cuda \
     --skip_existing
 
@@ -93,7 +93,7 @@ python predict_escape.py \
     --antibody_embedding_granularity residue \
     --antibody_embedding_type attention \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --save_dir results/attention_antibody_group_cross_antibody \
+    --save_dir results/attention_antibody_group_cross_antibody_residue \
     --device cuda \
     --skip_existing
 

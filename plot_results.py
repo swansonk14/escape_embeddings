@@ -25,7 +25,8 @@ MODEL_ORDER = [
     'Antigen Res Mut + Antibody One-Hot',
     'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
     'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
-    'Antigen Res Mut Att Antibody', 'Antigen Seq Linker Antibody'
+    'Antigen Res Mut Att Antibody', 'Antigen Seq Linker Antibody',
+    'Antigen Res Mut + Antibody One-Hot'
 ]
 MODEL_NAME_TO_ORDER = {
     model_name: index
