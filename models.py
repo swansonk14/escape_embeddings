@@ -430,7 +430,11 @@ class PyTorchEscapeModel(EscapeModel):
         self.core_model.eval()
         with torch.no_grad():
             for batch_data, _ in tqdm(data_loader, total=len(data_loader), desc='Batches', leave=False):
-                batch_data = batch_data.to(self.device)
+                if isinstance(batch_data, tuple):
+                    batch_data = tuple(tensor.to(self.device) for tensor in batch_data)
+                else:
+                    batch_data = batch_data.to(self.device)
+
                 preds = self.core_model(batch_data)
                 all_preds.append(preds.cpu().numpy())
 
