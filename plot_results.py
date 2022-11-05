@@ -162,6 +162,10 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
                         continue
 
+                    # This is because some R2 per-antibody values are extremely high and mess up the plot
+                    if model_granularity == 'per-antibody' and task_type == 'regression' and metric == 'R2':
+                        continue
+
                     # Get model names, mean values, and std values for this setting
                     model_names, mean_values, std_values = get_means_and_stds(
                         results=results,

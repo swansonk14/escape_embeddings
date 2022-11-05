@@ -144,7 +144,7 @@ Combine the results into a single CSV file.
 ```bash
 python combine_results.py \
     --results_dir results \
-    --save_path results/all_results.csv
+    --save_path results/results.csv
 ```
 
 
