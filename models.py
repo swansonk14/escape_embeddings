@@ -789,6 +789,7 @@ class RNNCoreModel(nn.Module):
 
     def __init__(self,
                  binarize: bool,
+                 antigen_embedding_granularity: EMBEDDING_GRANULARITY_OPTIONS,
                  hidden_dim: int,
                  hidden_layer_dims: tuple[int, ...]) -> None:
         """Initialize the model.
@@ -798,6 +799,7 @@ class RNNCoreModel(nn.Module):
         super(RNNCoreModel, self).__init__()
 
         self.binarize = binarize
+        self.antigen_embedding_granularity = antigen_embedding_granularity
         self.hidden_dim = hidden_dim
         self.hidden_layer_dims = hidden_layer_dims
 
@@ -838,9 +840,16 @@ class RNNCoreModel(nn.Module):
         # Embed amino acids
         x = self.embeddings(x)
 
-        # Run RNN
-        output, _ = self.rnn(x)  # (sequence_length, batch_size, 2 * hidden_dim)
-        x = output[site_indices, torch.arange(batch_size)]
+        # Run RNN (output: (sequence_length, batch_size, 2 * hidden_dim), hidden/cell: (2, batch_size, hidden_dim))
+        output, (hidden, cell) = self.rnn(x)
+
+        # Get sequence or residue embedding
+        if self.antigen_embedding_granularity == 'sequence':
+            x = hidden.transpose(0, 1).reshape(batch_size, -1)  # (batch_size, 2 * hidden_dim)
+        elif self.antigen_embedding_granularity == 'residue':
+            x = output[site_indices, torch.arange(batch_size)]  # (batch_size, 2 * hidden_dim)
+        else:
+            raise ValueError(f'Antigen embedding granularity "{self.antigen_embedding_granularity}" is not supported.')
 
         # Apply MLP
         x = self.mlp(x)
@@ -860,6 +869,7 @@ class RNNModel(PyTorchEscapeModel):
 
     def __init__(self,
                  task_type: TASK_TYPE_OPTIONS,
+                 antigen_embedding_granularity: EMBEDDING_GRANULARITY_OPTIONS,
                  num_epochs: int,
                  hidden_dim: int,
                  hidden_layer_dims: tuple[int, ...] = DEFAULT_HIDDEN_LAYER_DIMS,
@@ -877,12 +887,14 @@ class RNNModel(PyTorchEscapeModel):
             device=device
         )
 
+        self.antigen_embedding_granularity = antigen_embedding_granularity
         self.hidden_dim = hidden_dim
         self.hidden_layer_dims = hidden_layer_dims
 
         # Create model
         self._core_model = RNNCoreModel(
             binarize=self.binarize,
+            antigen_embedding_granularity=self.antigen_embedding_granularity,
             hidden_dim=self.hidden_dim,
             hidden_layer_dims=self.hidden_layer_dims
         ).to(self.device)

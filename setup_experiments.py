@@ -55,7 +55,13 @@ def run_experiments(
                     if model_type == 'likelihood':
                         experiment_args['antigen_likelihoods_path'] = antigen_likelihoods_path
 
-                    if model_type == 'embedding':
+                    if model_type == 'rnn':
+                        experiments_args = []
+                        for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
+                            experiments_args.append(experiment_args | {
+                                'antigen_embedding_granularity': antigen_embedding_granularity,
+                            })
+                    elif model_type == 'embedding':
                         antigen_experiment_args = []
                         for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                             for antigen_embedding_type in get_args(ANTIGEN_EMBEDDING_TYPE_OPTIONS):

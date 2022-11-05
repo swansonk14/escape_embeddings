@@ -222,6 +222,7 @@ python predict_escape.py \
 
 # RNN experiments in run_experiments_rnn.sh since they require GPU
 #python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
 #    --data_path data/data.csv \
 #    --model_granularity per-antibody \
 #    --model_type rnn \
@@ -231,102 +232,235 @@ python predict_escape.py \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
 #    --model_granularity per-antibody \
 #    --model_type rnn \
 #    --save_dir results/25 \
+#    --split_type mutation \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity per-antibody \
+#    --model_type rnn \
+#    --save_dir results/26 \
 #    --split_type site \
 #    --task_type classification \
 #    --skip_existing
 #
 #python predict_escape.py \
-#    --data_path data/data.csv \
-#    --model_granularity per-antibody \
-#    --model_type rnn \
-#    --save_dir results/26 \
-#    --split_type mutation \
-#    --task_type regression \
-#    --skip_existing
-#
-#python predict_escape.py \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
 #    --model_granularity per-antibody \
 #    --model_type rnn \
 #    --save_dir results/27 \
 #    --split_type site \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity per-antibody \
+#    --model_type rnn \
+#    --save_dir results/28 \
+#    --split_type mutation \
 #    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
-#    --model_granularity cross-antibody \
-#    --model_type rnn \
-#    --save_dir results/28 \
-#    --split_type mutation \
-#    --task_type classification \
-#    --skip_existing
-#
-#python predict_escape.py \
-#    --data_path data/data.csv \
-#    --model_granularity cross-antibody \
+#    --model_granularity per-antibody \
 #    --model_type rnn \
 #    --save_dir results/29 \
-#    --split_type site \
-#    --task_type classification \
+#    --split_type mutation \
+#    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
 #    --data_path data/data.csv \
-#    --model_granularity cross-antibody \
+#    --model_granularity per-antibody \
 #    --model_type rnn \
 #    --save_dir results/30 \
-#    --split_type antibody \
-#    --task_type classification \
+#    --split_type site \
+#    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
-#    --antibody_path data/antibodies.csv \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
-#    --model_granularity cross-antibody \
+#    --model_granularity per-antibody \
 #    --model_type rnn \
 #    --save_dir results/31 \
-#    --split_type antibody_group \
-#    --task_type classification \
+#    --split_type site \
+#    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
 #    --data_path data/data.csv \
 #    --model_granularity cross-antibody \
 #    --model_type rnn \
 #    --save_dir results/32 \
 #    --split_type mutation \
-#    --task_type regression \
+#    --task_type classification \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
 #    --model_granularity cross-antibody \
 #    --model_type rnn \
 #    --save_dir results/33 \
+#    --split_type mutation \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/34 \
+#    --split_type site \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/35 \
+#    --split_type site \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/36 \
+#    --split_type antibody \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/37 \
+#    --split_type antibody \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antibody_path data/antibodies.csv \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/38 \
+#    --split_type antibody_group \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antibody_path data/antibodies.csv \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/39 \
+#    --split_type antibody_group \
+#    --task_type classification \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/40 \
+#    --split_type mutation \
+#    --task_type regression \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/41 \
+#    --split_type mutation \
+#    --task_type regression \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/42 \
 #    --split_type site \
 #    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
+#    --antigen_embedding_granularity residue \
 #    --data_path data/data.csv \
 #    --model_granularity cross-antibody \
 #    --model_type rnn \
-#    --save_dir results/34 \
+#    --save_dir results/43 \
+#    --split_type site \
+#    --task_type regression \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity sequence \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/44 \
+#    --split_type antibody \
+#    --task_type regression \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/45 \
 #    --split_type antibody \
 #    --task_type regression \
 #    --skip_existing
 #
 #python predict_escape.py \
 #    --antibody_path data/antibodies.csv \
+#    --antigen_embedding_granularity sequence \
 #    --data_path data/data.csv \
 #    --model_granularity cross-antibody \
 #    --model_type rnn \
-#    --save_dir results/35 \
+#    --save_dir results/46 \
+#    --split_type antibody_group \
+#    --task_type regression \
+#    --skip_existing
+#
+#python predict_escape.py \
+#    --antibody_path data/antibodies.csv \
+#    --antigen_embedding_granularity residue \
+#    --data_path data/data.csv \
+#    --model_granularity cross-antibody \
+#    --model_type rnn \
+#    --save_dir results/47 \
 #    --split_type antibody_group \
 #    --task_type regression \
 #    --skip_existing
@@ -336,7 +470,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type likelihood \
-    --save_dir results/36 \
+    --save_dir results/48 \
     --split_type mutation \
     --task_type classification \
     --skip_existing
@@ -346,7 +480,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type likelihood \
-    --save_dir results/37 \
+    --save_dir results/49 \
     --split_type site \
     --task_type classification \
     --skip_existing
@@ -356,7 +490,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type likelihood \
-    --save_dir results/38 \
+    --save_dir results/50 \
     --split_type mutation \
     --task_type classification \
     --skip_existing
@@ -366,7 +500,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type likelihood \
-    --save_dir results/39 \
+    --save_dir results/51 \
     --split_type site \
     --task_type classification \
     --skip_existing
@@ -376,7 +510,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type likelihood \
-    --save_dir results/40 \
+    --save_dir results/52 \
     --split_type antibody \
     --task_type classification \
     --skip_existing
@@ -387,7 +521,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type likelihood \
-    --save_dir results/41 \
+    --save_dir results/53 \
     --split_type antibody_group \
     --task_type classification \
     --skip_existing
@@ -399,200 +533,48 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/42 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/43 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/44 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type linker \
-    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/45 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/46 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/47 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/48 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/49 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type one_hot \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/50 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/51 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/52 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/53 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type linker \
-    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
     --save_dir results/54 \
-    --split_type site \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
     --save_dir results/55 \
-    --split_type site \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/56 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
+    --antigen_embedding_granularity sequence \
     --antigen_embedding_type mutant_difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/57 \
-    --split_type site \
+    --save_dir results/56 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type linker \
+    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/57 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -600,7 +582,46 @@ python predict_escape.py \
     --model_granularity per-antibody \
     --model_type embedding \
     --save_dir results/58 \
-    --split_type site \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/59 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/60 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/61 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
@@ -613,8 +634,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/59 \
-    --split_type site \
+    --save_dir results/62 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
@@ -625,9 +646,9 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/60 \
-    --split_type mutation \
-    --task_type regression \
+    --save_dir results/63 \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -637,9 +658,9 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/61 \
-    --split_type mutation \
-    --task_type regression \
+    --save_dir results/64 \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -649,9 +670,9 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/62 \
-    --split_type mutation \
-    --task_type regression \
+    --save_dir results/65 \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -661,51 +682,12 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/63 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/64 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/65 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
     --save_dir results/66 \
-    --split_type mutation \
-    --task_type regression \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -713,8 +695,47 @@ python predict_escape.py \
     --model_granularity per-antibody \
     --model_type embedding \
     --save_dir results/67 \
-    --split_type mutation \
-    --task_type regression \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/68 \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/69 \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/70 \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -726,9 +747,9 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/68 \
-    --split_type mutation \
-    --task_type regression \
+    --save_dir results/71 \
+    --split_type site \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -738,8 +759,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/69 \
-    --split_type site \
+    --save_dir results/72 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -750,8 +771,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/70 \
-    --split_type site \
+    --save_dir results/73 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -762,8 +783,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/71 \
-    --split_type site \
+    --save_dir results/74 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -774,51 +795,12 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/72 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/73 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
-    --save_dir results/74 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity per-antibody \
-    --model_type embedding \
     --save_dir results/75 \
-    --split_type site \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -826,6 +808,158 @@ python predict_escape.py \
     --model_granularity per-antibody \
     --model_type embedding \
     --save_dir results/76 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/77 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/78 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/79 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type one_hot \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/80 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/81 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/82 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/83 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type linker \
+    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/84 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/85 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/86 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/87 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity per-antibody \
+    --model_type embedding \
+    --save_dir results/88 \
     --split_type site \
     --task_type regression \
     --skip_existing
@@ -839,7 +973,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity per-antibody \
     --model_type embedding \
-    --save_dir results/77 \
+    --save_dir results/89 \
     --split_type site \
     --task_type regression \
     --skip_existing
@@ -851,200 +985,48 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/78 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/79 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/80 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type linker \
-    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/81 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/82 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/83 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/84 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/85 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type one_hot \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/86 \
-    --split_type mutation \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/87 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/88 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/89 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type linker \
-    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
     --save_dir results/90 \
-    --split_type site \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/91 \
-    --split_type site \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/92 \
-    --split_type site \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
+    --antigen_embedding_granularity sequence \
     --antigen_embedding_type mutant_difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/93 \
-    --split_type site \
+    --save_dir results/92 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type linker \
+    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/93 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1052,7 +1034,46 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/94 \
-    --split_type site \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/95 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/96 \
+    --split_type mutation \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/97 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
@@ -1065,8 +1086,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/95 \
-    --split_type site \
+    --save_dir results/98 \
+    --split_type mutation \
     --task_type classification \
     --skip_existing
 
@@ -1077,8 +1098,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/96 \
-    --split_type antibody \
+    --save_dir results/99 \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
@@ -1089,8 +1110,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/97 \
-    --split_type antibody \
+    --save_dir results/100 \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
@@ -1101,8 +1122,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/98 \
-    --split_type antibody \
+    --save_dir results/101 \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
@@ -1113,51 +1134,12 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/99 \
-    --split_type antibody \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/100 \
-    --split_type antibody \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/101 \
-    --split_type antibody \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
     --save_dir results/102 \
-    --split_type antibody \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1165,7 +1147,46 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/103 \
-    --split_type antibody \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/104 \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/105 \
+    --split_type site \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/106 \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
@@ -1178,107 +1199,60 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/104 \
-    --split_type antibody \
+    --save_dir results/107 \
+    --split_type site \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity sequence \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/105 \
-    --split_type antibody_group \
+    --save_dir results/108 \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity sequence \
     --antigen_embedding_type difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/106 \
-    --split_type antibody_group \
+    --save_dir results/109 \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity sequence \
     --antigen_embedding_type mutant_difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/107 \
-    --split_type antibody_group \
+    --save_dir results/110 \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity sequence \
     --antigen_embedding_type linker \
     --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/108 \
-    --split_type antibody_group \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_path data/antibodies.csv \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/109 \
-    --split_type antibody_group \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_path data/antibodies.csv \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/110 \
-    --split_type antibody_group \
-    --task_type classification \
-    --skip_existing
-
-python predict_escape.py \
-    --antibody_path data/antibodies.csv \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
     --save_dir results/111 \
-    --split_type antibody_group \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1286,113 +1260,117 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/112 \
-    --split_type antibody_group \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type one_hot \
-    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
+    --antigen_embedding_type difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/113 \
-    --split_type antibody_group \
+    --split_type antibody \
     --task_type classification \
     --skip_existing
 
 python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/114 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/115 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/116 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity sequence \
-    --antigen_embedding_type linker \
-    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/117 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/118 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/119 \
-    --split_type mutation \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/120 \
-    --split_type mutation \
-    --task_type regression \
+    --split_type antibody \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
     --antibody_embedding_granularity sequence \
     --antibody_embedding_type concatenation \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/115 \
+    --split_type antibody \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type one_hot \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/116 \
+    --split_type antibody \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/117 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/118 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/119 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type linker \
+    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/120 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1400,22 +1378,65 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/121 \
-    --split_type mutation \
-    --task_type regression \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/122 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/123 \
+    --split_type antibody_group \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
     --antibody_embedding_granularity sequence \
-    --antibody_embedding_type one_hot \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/122 \
-    --split_type mutation \
-    --task_type regression \
+    --save_dir results/124 \
+    --split_type antibody_group \
+    --task_type classification \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type one_hot \
+    --antibody_path data/antibodies.csv \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/125 \
+    --split_type antibody_group \
+    --task_type classification \
     --skip_existing
 
 python predict_escape.py \
@@ -1425,8 +1446,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/123 \
-    --split_type site \
+    --save_dir results/126 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -1437,8 +1458,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/124 \
-    --split_type site \
+    --save_dir results/127 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -1449,8 +1470,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/125 \
-    --split_type site \
+    --save_dir results/128 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -1461,51 +1482,12 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/126 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/127 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/128 \
-    --split_type site \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
     --save_dir results/129 \
-    --split_type site \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1513,7 +1495,46 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/130 \
-    --split_type site \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/131 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/132 \
+    --split_type mutation \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/133 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -1526,8 +1547,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/131 \
-    --split_type site \
+    --save_dir results/134 \
+    --split_type mutation \
     --task_type regression \
     --skip_existing
 
@@ -1538,8 +1559,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/132 \
-    --split_type antibody \
+    --save_dir results/135 \
+    --split_type site \
     --task_type regression \
     --skip_existing
 
@@ -1550,8 +1571,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/133 \
-    --split_type antibody \
+    --save_dir results/136 \
+    --split_type site \
     --task_type regression \
     --skip_existing
 
@@ -1562,8 +1583,8 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/134 \
-    --split_type antibody \
+    --save_dir results/137 \
+    --split_type site \
     --task_type regression \
     --skip_existing
 
@@ -1574,51 +1595,12 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/135 \
-    --split_type antibody \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/136 \
-    --split_type antibody \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
-    --save_dir results/137 \
-    --split_type antibody \
-    --task_type regression \
-    --skip_existing
-
-python predict_escape.py \
-    --antigen_embedding_granularity residue \
-    --antigen_embedding_type mutant_difference \
-    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
-    --data_path data/data.csv \
-    --model_granularity cross-antibody \
-    --model_type embedding \
     --save_dir results/138 \
-    --split_type antibody \
+    --split_type site \
     --task_type regression \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
-    --antibody_embedding_type concatenation \
-    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
@@ -1626,6 +1608,158 @@ python predict_escape.py \
     --model_granularity cross-antibody \
     --model_type embedding \
     --save_dir results/139 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/140 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/141 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/142 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type one_hot \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/143 \
+    --split_type site \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/144 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/145 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/146 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity sequence \
+    --antigen_embedding_type linker \
+    --antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/147 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/148 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/149 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant_difference \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/150 \
+    --split_type antibody \
+    --task_type regression \
+    --skip_existing
+
+python predict_escape.py \
+    --antibody_embedding_granularity sequence \
+    --antibody_embedding_type concatenation \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antigen_embedding_granularity residue \
+    --antigen_embedding_type mutant \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --data_path data/data.csv \
+    --model_granularity cross-antibody \
+    --model_type embedding \
+    --save_dir results/151 \
     --split_type antibody \
     --task_type regression \
     --skip_existing
@@ -1639,7 +1773,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/140 \
+    --save_dir results/152 \
     --split_type antibody \
     --task_type regression \
     --skip_existing
@@ -1652,7 +1786,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/141 \
+    --save_dir results/153 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1665,7 +1799,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/142 \
+    --save_dir results/154 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1678,7 +1812,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/143 \
+    --save_dir results/155 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1691,7 +1825,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/144 \
+    --save_dir results/156 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1704,7 +1838,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/145 \
+    --save_dir results/157 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1717,7 +1851,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/146 \
+    --save_dir results/158 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1730,7 +1864,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/147 \
+    --save_dir results/159 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1746,7 +1880,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/148 \
+    --save_dir results/160 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing
@@ -1761,7 +1895,7 @@ python predict_escape.py \
     --data_path data/data.csv \
     --model_granularity cross-antibody \
     --model_type embedding \
-    --save_dir results/149 \
+    --save_dir results/161 \
     --split_type antibody_group \
     --task_type regression \
     --skip_existing

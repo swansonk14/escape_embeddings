@@ -149,6 +149,7 @@ def train_and_eval_escape(
     elif model_type == 'rnn':
         model = RNNModel(
             task_type=task_type,
+            antigen_embedding_granularity=antigen_embedding_granularity,
             num_epochs=num_epochs,
             hidden_dim=rnn_hidden_dim,
             hidden_layer_dims=hidden_layer_dims,
@@ -266,7 +267,8 @@ def predict_escape(
                and antigen_embedding_granularity is not None
     else:
         assert antigen_embeddings_path is None and antigen_embedding_type is None \
-               and antigen_embedding_granularity is None and antibody_embeddings_path is None and num_epochs is None
+               and (antigen_embedding_granularity is None or args.model_type == 'rnn') \
+               and antibody_embeddings_path is None and num_epochs is None
 
     if antibody_embeddings_path is not None:
         assert antibody_embedding_type is not None and antibody_embedding_type != 'one_hot' \

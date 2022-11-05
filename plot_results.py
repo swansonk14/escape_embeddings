@@ -15,12 +15,12 @@ from constants import (
 )
 
 LIMITED_MODELS = [
-    'Mutation', 'Site', 'RNN', 'Likelihood',
+    'Mutation', 'Site', 'RNN Res', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff', 'Antigen Res Mut',
     'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb', 'Antigen Linker Antibody'
 ]
 MODEL_ORDER = [
-    'Mutation', 'Site', 'RNN', 'Likelihood',
+    'Mutation', 'Site', 'RNN Seq', 'RNN Res', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
     'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
     'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb',
@@ -41,7 +41,16 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
     """
     whitespace = '\n' if newlines else ' '
 
-    if row.model_type == 'embedding':
+    if row.model_type == 'rnn':
+        model_name = 'RNN'
+
+        if row.antigen_embedding_granularity == 'sequence':
+            model_name += ' Seq'
+        elif row.antigen_embedding_granularity == 'residue':
+            model_name += ' Res'
+        else:
+            raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
+    elif row.model_type == 'embedding':
         model_name = 'Antigen'
 
         if row.antigen_embedding_type != 'linker':
@@ -74,8 +83,6 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
 
-    elif row.model_type == 'rnn':
-        model_name = row.model_type.upper()
     else:
         model_name = row.model_type.title()
 
