@@ -1,16 +1,19 @@
 # Escape Embeddings
 
-Modeling SARS-CoV-2 antigen escape from antibodies using pretrained protein language model embeddings.
+This repo contains code for modeling SARS-CoV-2 antigen escape from antibodies using pretrained protein language model embeddings.
 
+All data, embeddings, and results are available in this Google Drive folder: https://drive.google.com/drive/folders/18heVMWK46ExHkSeixyrNiJLovnIbZ4jg?usp=share_link
+
+[//]: # (TODO: add link to arxiv paper)
 
 ## Installation
 
-Install conda environment. If using GPU, first open `environment.yml` and uncomment the line with `cudatoolkit=11.3`.
+Install the conda environment. If using a GPU, first open `environment.yml` and uncomment the line with `cudatoolkit=11.3`.
 ```bash
 conda env create -f environment.yml
 ```
 
-Activate conda environment.
+Activate the conda environment.
 ```bash
 conda activate escape_embeddings
 ```
@@ -126,6 +129,8 @@ Note: The RNN experiments were manually extracted and put in `run_experiments_rn
 
 ## Run Experiments
 
+Run the experiments. `run_experiments.sh` is CPU only, while `run_experiments_rnn.sh` requires a GPU.
+
 ```bash
 bash run_experiments.sh
 bash run_experiments_rnn.sh
@@ -133,6 +138,8 @@ bash run_experiments_rnn.sh
 
 
 ## Combine Results
+
+Combine the results into a single CSV file.
 
 ```bash
 python combine_results.py \
@@ -142,6 +149,8 @@ python combine_results.py \
 
 
 ## Plot Results
+
+Plot the results.
 
 ```bash
 python plot_results.py \
