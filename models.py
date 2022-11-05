@@ -788,6 +788,7 @@ class RNNCoreModel(nn.Module):
     """The core recurrent neural network that predicts escape scores based on one-hot amino acid features."""
 
     def __init__(self,
+                 binarize: bool,
                  hidden_dim: int,
                  hidden_layer_dims: tuple[int, ...]) -> None:
         """Initialize the model.
@@ -796,6 +797,7 @@ class RNNCoreModel(nn.Module):
         """
         super(RNNCoreModel, self).__init__()
 
+        self.binarize = binarize
         self.hidden_dim = hidden_dim
         self.hidden_layer_dims = hidden_layer_dims
 
@@ -880,6 +882,7 @@ class RNNModel(PyTorchEscapeModel):
 
         # Create model
         self._core_model = RNNCoreModel(
+            binarize=self.binarize,
             hidden_dim=self.hidden_dim,
             hidden_layer_dims=self.hidden_layer_dims
         ).to(self.device)
