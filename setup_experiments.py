@@ -98,9 +98,9 @@ def run_experiments(
                                         continue
 
                                     antibody_experiments_args.append(experiment_args | {
-                                        'antibody_embedding_granularity': antibody_embedding_granularity,
                                         'antibody_embedding_type': antibody_embedding_type
-                                    } | ({'antibody_embeddings_path': antibody_embeddings_path}
+                                    } | ({'antibody_embeddings_path': antibody_embeddings_path,
+                                          'antibody_embedding_granularity': antibody_embedding_granularity,}
                                          if antibody_embedding_type != 'one_hot' else {})
                                     )
 

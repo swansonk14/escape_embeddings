@@ -626,7 +626,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -739,7 +738,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -852,7 +850,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -965,7 +962,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1078,7 +1074,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1191,7 +1186,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1304,7 +1298,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1425,7 +1418,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
@@ -1539,7 +1531,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1652,7 +1643,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1765,7 +1755,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antigen_embedding_granularity residue \
     --antigen_embedding_type mutant \
@@ -1886,7 +1875,6 @@ python predict_escape.py \
     --skip_existing
 
 python predict_escape.py \
-    --antibody_embedding_granularity sequence \
     --antibody_embedding_type one_hot \
     --antibody_path data/antibodies.csv \
     --antigen_embedding_granularity residue \
