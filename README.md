@@ -128,6 +128,7 @@ Note: The RNN experiments were manually extracted and put in `run_experiments_rn
 
 ```bash
 bash run_experiments.sh
+bash run_experiments_rnn.sh
 ```
 
 

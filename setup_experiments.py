@@ -81,10 +81,10 @@ def run_experiments(
                                 for antibody_embedding_type in get_args(ANTIBODY_EMBEDDING_TYPE_OPTIONS):
                                     # Only do antibody experiments with antigen res mut embeddings
                                     if experiment_args['antigen_embedding_granularity'] != 'residue' or \
-                                            experiment_args['antigen_embedding_type'] != 'mutation':
+                                            experiment_args['antigen_embedding_type'] != 'mutant':
                                         continue
 
-                                    if antibody_embedding_type == 'concatenation' \
+                                    if antibody_embedding_type in {'concatenation', 'one_hot'} \
                                             and antibody_embedding_granularity != 'sequence':
                                         continue
 
