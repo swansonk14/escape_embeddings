@@ -15,18 +15,16 @@ from constants import (
 )
 
 LIMITED_MODELS = [
-    'Mutation', 'Site', 'RNN', 'Likelihood', 'Antigen Seq Mut', 'Antigen Seq Diff',
-    'Antigen Seq MutDiff', 'Antigen Res Mut', 'Antigen Res Mut + Antibody', 'Antigen Res Mut Att Antibody'
+    'Mutation', 'Site', 'RNN', 'Likelihood',
+    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff', 'Antigen Res Mut',
+    'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb', 'Antigen Linker Antibody'
 ]
 MODEL_ORDER = [
     'Mutation', 'Site', 'RNN', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
     'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
-    'Antigen Res Mut + Antibody One-Hot',
-    'Antigen Seq Mut + Antibody', 'Antigen Seq Diff + Antibody',
-    'Antigen Res Mut + Antibody', 'Antigen Res Diff + Antibody',
-    'Antigen Res Mut Att Antibody', 'Antigen Seq Linker Antibody',
-    'Antigen Res Mut + Antibody One-Hot'
+    'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb',
+    'Antigen Linker Antibody'
 ]
 MODEL_NAME_TO_ORDER = {
     model_name: index
@@ -46,12 +44,13 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
     if row.model_type == 'embedding':
         model_name = 'Antigen'
 
-        if row.antigen_embedding_granularity == 'sequence':
-            model_name += f'{whitespace}Seq'
-        elif row.antigen_embedding_granularity == 'residue':
-            model_name += f'{whitespace}Res'
-        else:
-            raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
+        if row.antigen_embedding_type != 'linker':
+            if row.antigen_embedding_granularity == 'sequence':
+                model_name += f'{whitespace}Seq'
+            elif row.antigen_embedding_granularity == 'residue':
+                model_name += f'{whitespace}Res'
+            else:
+                raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
 
         if isinstance(row.antigen_embedding_type, str):
             if row.antigen_embedding_type == 'mutant':
@@ -67,13 +66,14 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
 
         if isinstance(row.antibody_embedding_type, str):
             if row.antibody_embedding_type == 'concatenation':
-                model_name += f' +{whitespace}Antibody'
-            elif row.antibody_embedding_type == 'attention':
-                model_name += f' Att{whitespace}Antibody'
+                model_name += f' +{whitespace}Antibody Emb'
             elif row.antibody_embedding_type == 'one_hot':
-                model_name += f' +{whitespace}Antibody One-Hot'
+                model_name += f' +{whitespace}Antibody OH'
+            elif row.antibody_embedding_type == 'attention':
+                model_name += f' +{whitespace}Antibody Att'
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
+
     elif row.model_type == 'rnn':
         model_name = row.model_type.upper()
     else:

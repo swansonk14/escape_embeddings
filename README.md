@@ -80,7 +80,7 @@ python generate_embeddings.py \
     --antibody_path data/antibodies.csv
 ```
 
-Antibody-antigen embeddings
+Antibody-antigen (linker) embeddings
 ```bash
 python generate_embeddings.py \
     --hub_dir models \
@@ -116,10 +116,13 @@ python setup_experiments.py \
     --antigen_likelihoods_path embeddings/antigen_likelihood_ratios.pt \
     --antigen_embeddings_path embeddings/antigen_embeddings.pt \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antibody_antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
     --experiment_save_dir results \
     --bash_save_path run_experiments.sh \
     --skip_existing
 ```
+
+Note: The RNN experiments were manually extracted and put in `run_experiments_rnn.sh` while all other experiments remain in `run_experiments.sh`. This is because the RNN experiments require a GPU while the other experiments do not.
 
 ## Run Experiments
 
