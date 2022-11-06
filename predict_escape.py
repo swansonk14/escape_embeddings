@@ -38,7 +38,10 @@ from constants import (
     TASK_TYPE_OPTIONS,
     WILDTYPE_COLUMN
 )
-from models import EmbeddingModel, LikelihoodModel, MutationModel, RNNModel, SiteModel
+from models_baseline import MutationModel, SiteModel
+from models_embedding import EmbeddingModel
+from models_likelihood import LikelihoodModel
+from models_rnn import RNNModel
 
 
 def split_data(
@@ -49,11 +52,13 @@ def split_data(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split data into train and test DataFrames."""
     # TODO: params docstring
+    # Split mutations into train and test randomly
     if split_type == 'mutation':
         train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(data))[fold]
         train_data = data.iloc[train_indices]
         test_data = data.iloc[test_indices]
 
+    # Split antigen sites into train and test randomly
     elif split_type == 'site':
         sites = np.array(sorted(data[SITE_COLUMN].unique()))
         train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(sites))[fold]
@@ -61,6 +66,7 @@ def split_data(
         train_data = data[data[SITE_COLUMN].isin(train_sites)]
         test_data = data[data[SITE_COLUMN].isin(test_sites)]
 
+    # Split antibodies into train and test randomly
     elif split_type == 'antibody':
         antibodies = np.array(sorted(data[ANTIBODY_COLUMN].unique()))
         train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(antibodies))[fold]
@@ -68,6 +74,7 @@ def split_data(
         train_data = data[data[ANTIBODY_COLUMN].isin(train_antibodies)]
         test_data = data[data[ANTIBODY_COLUMN].isin(test_antibodies)]
 
+    # Split antibody groups into train and test randomly
     elif split_type == 'antibody_group':
         # Load antibody data
         antibody_data = pd.read_csv(antibody_path)
@@ -203,7 +210,6 @@ def train_and_eval_escape(
     unique_binary_labels = set(binary_test_escape)
 
     # Evaluate predictions
-    # TODO: average by antibody or across mutations?
     results = {
         'ROC-AUC': roc_auc_score(binary_test_escape, test_preds) if len(unique_binary_labels) > 1 else float('nan'),
         'PRC-AUC': average_precision_score(binary_test_escape, test_preds) if len(unique_binary_labels) > 1 else float('nan'),
@@ -248,7 +254,6 @@ def predict_escape(
     start_time = time()
 
     # Validate arguments
-    # TODO: improve error messages
     if model_granularity == 'per-antibody':
         assert split_type not in {'antibody', 'antibody_group'}
 
@@ -405,7 +410,7 @@ if __name__ == '__main__':
     # Parse args
     args = PredictEscapeArgs().parse_args()
 
-    # Skip existing
+    # Stop running if skip_existing is True and the save directory already exists
     if args.skip_existing and args.save_dir.exists():
         print('skip_existing is True and save_dir already exists. Exiting...')
         exit()
@@ -414,7 +419,7 @@ if __name__ == '__main__':
     args.save_dir.mkdir(parents=True, exist_ok=True)
     args.save(args.save_dir / 'args.json')
 
-    # Prepare args dict
+    # Prepare args dict and remove skip_existing
     args_dict = args.as_dict()
     del args_dict['skip_existing']
 

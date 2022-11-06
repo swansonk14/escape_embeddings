@@ -75,7 +75,7 @@ python generate_embeddings.py \
 Antibody embeddings
 ```bash
 python generate_embeddings.py \
-    --hub_dir models \esm2_t33_650M_UR50D
+    --hub_dir models \
     --esm_model esm2_t33_650M_UR50D \
     --last_layer 33 \
     --embedding_type antibody \
