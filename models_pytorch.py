@@ -24,7 +24,9 @@ class PyTorchEscapeModel(EscapeModel):
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
-        TODO: docstring
+        :param num_epochs: The number of epochs to train for.
+        :param batch_size: The number of sequences to process at once.
+        :param device: The device to use (e.g., "cpu" or "cuda") for the model.
         """
         super(PyTorchEscapeModel, self).__init__(task_type=task_type)
 

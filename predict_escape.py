@@ -50,8 +50,14 @@ def split_data(
         split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split data into train and test DataFrames."""
-    # TODO: params docstring
+    """Split data into train and test DataFrames.
+
+    :param data: DataFrame containing the escape data.
+    :param fold: The fold number to use for this run.
+    :param split_type: The type of data split.
+    :param antibody_path: Path to a CSV file containing antibody sequences and groups.
+    :return: A tuple of DataFrames containing the train and test data.
+    """
     # Split mutations into train and test randomly
     if split_type == 'mutation':
         train_indices, test_indices = list(KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=0).split(data))[fold]
@@ -124,7 +130,27 @@ def train_and_eval_escape(
 ) -> dict[str, Optional[float]]:
     """Train and evaluate a model on predicting escape.
 
-    TODO: params docstring
+    :param data: DataFrame containing the escape data.
+    :param fold: The fold number to use for this run.
+    :param model_type: The type of model to train.
+    :param task_type: The type of task to perform.
+    :param split_type: The type of data split.
+    :param antibody_path: Path to a CSV file containing antibody sequences and groups.
+    :param antigen_likelihoods: A dictionary mapping from antigen name to (mutant - wildtype) likelihood.
+    :param antigen_embeddings: A dictionary mapping from antigen name to ESM2 embedding.
+    :param antigen_embedding_granularity: The granularity of the antigen embeddings, either a sequence average or per-residue embeddings.
+    :param antigen_embedding_type: The type of antigen embedding.
+    :param antibody_embeddings: A dictionary mapping from antibody name_chain to ESM2 embedding.
+    :param antibody_embedding_granularity: The granularity of the antibody embeddings, either a sequence average or per-residue embeddings.
+    :param antibody_embedding_type: Method of including the antibody embeddings with antigen embeddings.
+    :param unique_antibodies: A list of unique antibodies.
+    :param hidden_layer_dims: The sizes of the hidden layers of the MLP model that will be trained.
+    :param rnn_hidden_dim: The dimensionality of the RNN model.
+    :param attention_num_heads: The number of attention heads for the attention antibody embedding type.
+    :param num_epochs: The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity.
+    :param batch_size: The batch size for the embedding model.
+    :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
+    :param verbose: Whether to print additional debug information.
     :return: A results dictionary mapping metric to value.
     """
     if verbose:
@@ -229,8 +255,8 @@ def predict_escape(
         save_dir: Path,
         model_granularity: MODEL_GRANULARITY_OPTIONS,
         model_type: MODEL_TYPE_OPTIONS,
-        split_type: SPLIT_TYPE_OPTIONS,
         task_type: TASK_TYPE_OPTIONS,
+        split_type: SPLIT_TYPE_OPTIONS,
         antibody_path: Optional[Path] = None,
         antigen_likelihoods_path: Optional[Path] = None,
         antigen_embeddings_path: Optional[Path] = None,
@@ -247,9 +273,30 @@ def predict_escape(
         device: str = DEFAULT_DEVICE,
         verbose: bool = False
 ) -> None:
-    """Train a model to predict antigen escape using ESM2 embeddings."""
-    # TODO: params docstring copied from args
+    """Train a model to predict antigen escape using ESM2 embeddings.
 
+    :param data_path: Path to CSV file containing antibody escape data.
+    :param save_dir: Path to directory where results will be saved.
+    :param model_granularity: The granularity of the model, either one model per antibody or one model across all antibodies.
+    :param model_type: The type of model to train.
+    :param task_type: The type of task to perform.
+    :param split_type: The type of data split.
+    :param antibody_path: Path to a CSV file containing antibody sequences and groups.
+    :param antigen_likelihoods_path: Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood.
+    :param antigen_embeddings_path: Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding.
+    :param antigen_embedding_granularity: The granularity of the antigen embeddings, either a sequence average or per-residue embeddings.
+    :param antigen_embedding_type: The type of antigen embedding.
+    :param antibody_embeddings_path: Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding.
+    :param antibody_embedding_granularity: The granularity of the antibody embeddings, either a sequence average or per-residue embeddings.
+    :param antibody_embedding_type: Method of including the antibody embeddings with antigen embeddings.
+    :param hidden_layer_dims: The sizes of the hidden layers of the MLP model that will be trained.
+    :param rnn_hidden_dim: The dimensionality of the RNN model.
+    :param attention_num_heads: The number of attention heads for the attention antibody embedding type.
+    :param num_epochs: The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity.
+    :param batch_size: The batch size for the embedding model.
+    :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
+    :param verbose: Whether to print additional debug information.
+    """
     # Start timer
     start_time = time()
 

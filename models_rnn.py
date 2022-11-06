@@ -29,7 +29,10 @@ class RNNCoreModel(nn.Module):
                  hidden_layer_dims: tuple[int, ...]) -> None:
         """Initialize the model.
 
-        TODO: params docstring
+        :param binarize: Whether the escape scores are binarized (for classification), thus requiring a sigmoid.
+        :param antigen_embedding_granularity: The granularity of the antigen embeddings, either a sequence average or per-residue embeddings.
+        :param hidden_dim: The dimension of the hidden state of the RNN.
+        :param hidden_layer_dims: The dimensions of the hidden layers of the MLP.
         """
         super(RNNCoreModel, self).__init__()
 
@@ -65,7 +68,11 @@ class RNNCoreModel(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
-        """TODO: docstring"""
+        """Runs the model on the data.
+
+        :param x: A FloatTensor containing an embedding of the antibody and/or antigen.
+        :return: A FloatTensor containing the model's predicted escape score.
+        """
         # Extract mutation sites
         site_indices, x = x[0], x[1:]
 
@@ -113,7 +120,12 @@ class RNNModel(PyTorchEscapeModel):
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
-        TODO: document remaining parameters
+        :param antigen_embedding_granularity: The granularity of the antigen embeddings, either a sequence average or per-residue embeddings.
+        :param num_epochs: The number of epochs to train for.
+        :param hidden_dim: The dimension of the hidden state of the RNN.
+        :param hidden_layer_dims: The dimensions of the hidden layers of the MLP.
+        :param batch_size: The number of sequences to process at once.
+        :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
         """
         super(RNNModel, self).__init__(
             task_type=task_type,

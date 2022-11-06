@@ -33,7 +33,11 @@ class EmbeddingCoreModel(nn.Module):
                  attention_num_heads: int) -> None:
         """Initialize the model.
 
-        TODO: params docstring
+        :param binarize: Whether the escape scores are binarized (for classification), thus requiring a sigmoid.
+        :param antibody_attention: Whether to apply antibody attention.
+        :param input_dim: The dimensionality of the input to the model.
+        :param hidden_layer_dims: The dimensionalities of the hidden layers.
+        :param attention_num_heads: The number of attention heads to use.
         """
         super(EmbeddingCoreModel, self).__init__()
 
@@ -68,8 +72,13 @@ class EmbeddingCoreModel(nn.Module):
         # Create sigmoid function
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
-        """TODO: docstring"""
+    def forward(self, x: torch.FloatTensor | tuple[torch.FloatTensor, ...]) -> torch.FloatTensor:
+        """Runs the model on the data.
+
+        :param x: A FloatTensor containing an embedding of the antibody and/or antigen
+                  or a tuple of FloatTensors containing the antibody chain and antigen embeddings if using attention.
+        :return: A FloatTensor containing the model's predicted escape score.
+        """
         # Apply attention
         if self.antibody_attention:
             antigen_embeddings, antibody_heavy_embeddings, antibody_light_embeddings = x
@@ -117,7 +126,19 @@ class EmbeddingModel(PyTorchEscapeModel):
         """Initialize the model.
 
         :param task_type: The type of task to perform, i.e., classification or regression.
-        TODO: document remaining parameters
+        :param num_epochs: The number of epochs to train for.
+        :param antigen_embeddings: A dictionary mapping from antigen name to ESM2 embedding.
+        :param antigen_embedding_granularity: The granularity of the antigen embeddings, either a sequence average or per-residue embeddings.
+        :param antigen_embedding_type: The type of antigen embedding.
+        :param antibody_embeddings: A dictionary mapping from antibody name_chain to ESM2 embedding.
+        :param antibody_embedding_granularity: The granularity of the antibody embeddings, either a sequence average or per-residue embeddings.
+        :param antibody_embedding_type: Method of including the antibody embeddings with antigen embeddings.
+        :param unique_antibodies: A list of unique antibodies.
+        :param hidden_layer_dims: The sizes of the hidden layers of the MLP model that will be trained.
+        :param attention_num_heads: The number of attention heads for the attention antibody embedding type.
+        :param num_epochs: The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity.
+        :param batch_size: The batch size for the embedding model.
+        :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
         """
         super(EmbeddingModel, self).__init__(
             task_type=task_type,

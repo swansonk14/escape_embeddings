@@ -34,7 +34,11 @@ class MLP(nn.Module):
         self.activation = nn.ReLU()
 
     def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
-        """TODO: docstring"""
+        """Runs the model on the data.
+
+        :param x: A FloatTensor containing an embedding of the antibody and/or antigen.
+        :return: A FloatTensor containing the model's predicted escape score.
+        """
         # Apply layers
         for i, layer in enumerate(self.layers):
             x = layer(x)
