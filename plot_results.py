@@ -14,11 +14,13 @@ from constants import (
     TASK_TYPE_OPTIONS
 )
 
+# The list of models that will appear in the "limited" plots
 LIMITED_MODELS = [
     'Mutation', 'Site', 'RNN Res', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff', 'Antigen Res Mut',
     'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb', 'Antigen Linker Antibody'
 ]
+# The desired order of the models in the plots
 MODEL_ORDER = [
     'Mutation', 'Site', 'RNN Seq', 'RNN Res', 'Likelihood',
     'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
@@ -26,6 +28,7 @@ MODEL_ORDER = [
     'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb',
     'Antigen Linker Antibody'
 ]
+# A dictionary mapping from model name to order index
 MODEL_NAME_TO_ORDER = {
     model_name: index
     for index, model_name in enumerate(MODEL_ORDER)
@@ -50,6 +53,7 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
             model_name += ' Res'
         else:
             raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
+
     elif row.model_type == 'embedding':
         model_name = 'Antigen'
 
@@ -59,7 +63,8 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
             elif row.antigen_embedding_granularity == 'residue':
                 model_name += f'{whitespace}Res'
             else:
-                raise ValueError(f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
+                raise ValueError(
+                    f'Antigen embedding granularity "{row.antigen_embedding_granularity}" is not supported.')
 
         if isinstance(row.antigen_embedding_type, str):
             if row.antigen_embedding_type == 'mutant':
@@ -112,7 +117,7 @@ def get_means_and_stds(results: pd.DataFrame,
         (results['task_type'] == task_type)
         & (results['model_granularity'] == model_granularity)
         & (results['split_type'] == split_type)
-        ]
+    ]
 
     # Remove likelihood if regression since it isn't trained in that capacity
     if task_type == 'regression':
@@ -193,6 +198,7 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
             width = 1 / (1.25 * num_models)
             offset = width * num_models / 2
 
+            # Plot the results for each model in this setting
             for i in range(num_models):
                 model_name = model_names[i]
                 mean_values = all_mean_values[:, i]

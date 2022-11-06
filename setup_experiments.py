@@ -1,4 +1,4 @@
-"""Run all experiments of predicting escape with different models and settings."""
+"""Sets up all experiments for predicting escape with different data, models, and settings."""
 from pathlib import Path
 from typing import get_args, Optional
 
@@ -15,7 +15,7 @@ from constants import (
 )
 
 
-def run_experiments(
+def setup_experiments(
         data_path: str,
         antibody_path: str,
         antigen_likelihoods_path: str,
@@ -27,8 +27,18 @@ def run_experiments(
         device: Optional[str] = None,
         skip_existing: bool = False
 ) -> None:
-    """Run all experiments of predicting escape with different models and settings.
-    TODO: params docstring
+    """Sets up all experiments for predicting escape with different data, models, and settings.
+
+    :param data_path: Path to CSV file containing antibody escape data.
+    :param antibody_path: Path to a CSV file containing antibody sequences and groups.
+    :param antigen_likelihoods_path: Path to PT file containing a dictionary mapping from antigen name to (mutant - wildtype) likelihood.
+    :param antigen_embeddings_path: Path to PT file containing a dictionary mapping from antigen name to ESM2 embedding.
+    :param antibody_embeddings_path: Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding.
+    :param antibody_antigen_embeddings_path: Path to PT file containing a dictionary mapping from antibody name_chain and antigen name to ESM2 embedding.
+    :param experiment_save_dir: Path to directory where all the experiment results will be saved.
+    :param bash_save_path: Path to bash file where experiment commands will be saved.
+    :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
+    :param skip_existing: Whether to skip running the code if the save_dir already exists.
     """
     # Set up experiment args
     all_experiments_args = []
@@ -116,7 +126,7 @@ def run_experiments(
 
     print(f'Number of experiments = {len(all_experiments_args):,}')
 
-    # Save experiment commands
+    # Save experiment commands in the correct format
     with open(bash_save_path, 'w') as f:
         f.write('#!/bin/bash\n\n')
 
@@ -164,4 +174,4 @@ if __name__ == '__main__':
         """Whether to skip running the code if the save_dir already exists."""
 
 
-    run_experiments(**Args().parse_args().as_dict())
+    setup_experiments(**Args().parse_args().as_dict())

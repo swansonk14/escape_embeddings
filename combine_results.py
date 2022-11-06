@@ -9,7 +9,11 @@ from args import PredictEscapeArgs
 
 
 def combine_results(results_dir: Path, save_path: Path) -> None:
-    """Combine the results of multiple experiments into a single CSV file."""
+    """Combine the results of multiple experiments into a single CSV file.
+
+    :param results_dir: Path to directory containing experiment results.
+    :param save_path: Path to CSV file where combined results will be saved.
+    """
     # Get all results
     results_dicts = []
     results_dirs = sorted(path for path in results_dir.iterdir() if path.is_dir())
@@ -50,7 +54,7 @@ def combine_results(results_dir: Path, save_path: Path) -> None:
 
 if __name__ == '__main__':
     class Args(Tap):
-        results_dir: Path  # Path to directory containing results.
+        results_dir: Path  # Path to directory containing experiment results.
         save_path: Path  # Path to CSV file where combined results will be saved.
 
     combine_results(**Args().parse_args().as_dict())

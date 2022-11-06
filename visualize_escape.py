@@ -40,15 +40,18 @@ def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> No
     :param data: DataFrame containing escape data.
     :param save_path: Path to PDF/PNG file where escape score plot by antibody site will be saved.
     """
-    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[
-        ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
+    # Get the maximum escape score per antibody per site
+    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[ESCAPE_COLUMN].max().reset_index()
 
+    # Get the unique antibodies and sites
     antibodies = escape[ANTIBODY_COLUMN].unique()
     sites = escape[SITE_COLUMN].unique()
     assert len(sites) == len(RBD_SEQUENCE)
 
+    # Create a grid of escape scores of antibodies by antigen sites
     escape_grid = escape[ESCAPE_COLUMN].to_numpy().reshape(len(antibodies), len(sites))
 
+    # Plot the escape score grid
     fig, ax = plt.subplots()
     im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
     fig.colorbar(im)
@@ -71,23 +74,28 @@ def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data
     :param antibody_data: DataFrame containing antibody data (including antibody groups).
     :param save_path: Path to PDF/PNG file where escape score plot by antibody site by group will be saved.
     """
-    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[
-        ESCAPE_COLUMN].max().reset_index()  # max escape per antibody per site
+    # Get the maximum escape score per antibody per site
+    escape = data.groupby([ANTIBODY_COLUMN, SITE_COLUMN])[ESCAPE_COLUMN].max().reset_index()
 
+    # Get the unique antibodies and sites
     antibodies = escape[ANTIBODY_COLUMN].unique()
     sites = escape[SITE_COLUMN].unique()
     assert len(sites) == len(RBD_SEQUENCE)
 
+    # Create a grid of escape scores of antibodies by antigen sites
     escape_grid = escape[ESCAPE_COLUMN].to_numpy().reshape(len(antibodies), len(sites))
     min_escape, max_escape = escape_grid.min(), escape_grid.max()
 
     escape_data = pd.DataFrame(escape_grid, index=antibodies, columns=sites)
 
+    # Group escape data by antibody group
     groups = sorted(antibody_data[EPITOPE_GROUP_COLUMN].unique())
     assert len(groups) == 6
 
+    # Plot the escape score grids by antibody group
     fig, axes = plt.subplots(3, 2)
 
+    # Plot the escape score grid for each antibody group
     for i, group in enumerate(groups):
         row, col = i // 2, i % 2
         ax = axes[row, col]
@@ -116,14 +124,17 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -
     :param data: DataFrame containing escape data.
     :param save_path: Path to PDF/PNG file where escape score plot by amino acid change will be saved.
     """
-    escape = data.groupby([WILDTYPE_COLUMN, MUTANT_COLUMN])[
-        ESCAPE_COLUMN].mean().reset_index()  # mean escape per aa change
+    # Get the average escape score per amino acid change
+    escape = data.groupby([WILDTYPE_COLUMN, MUTANT_COLUMN])[ESCAPE_COLUMN].mean().reset_index()
 
+    # Get the unique wildtype and mutant amino acids
     wildtype = escape[WILDTYPE_COLUMN].unique()
     mutation = escape[MUTANT_COLUMN].unique()
 
+    # Create a grid of escape scores of wildtype amino acids by mutant amino acids
     escape_grid = escape[ESCAPE_COLUMN].to_numpy().reshape(len(wildtype), len(mutation))
 
+    # Plot the escape score grid
     fig, ax = plt.subplots()
     im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
     fig.colorbar(im)

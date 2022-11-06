@@ -1,4 +1,4 @@
-"""Contains classes of arguments for command line argument parsing."""
+"""Contains argument classes for command line argument parsing."""
 from pathlib import Path
 from typing import Optional
 
@@ -42,7 +42,7 @@ class PredictEscapeArgs(Tap):
     antigen_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
     """The granularity of the antigen embeddings, either a sequence average or per-residue embeddings."""
     antigen_embedding_type: Optional[ANTIGEN_EMBEDDING_TYPE_OPTIONS] = None
-    """The type of antigen embedding. mutant: The mutant embedding. difference: mutant - wildtype embedding."""
+    """The type of antigen embedding."""
     antibody_embeddings_path: Optional[Path] = None
     """Path to PT file containing a dictionary mapping from antibody name_chain to ESM2 embedding."""
     antibody_embedding_granularity: Optional[EMBEDDING_GRANULARITY_OPTIONS] = None
@@ -54,7 +54,7 @@ class PredictEscapeArgs(Tap):
     rnn_hidden_dim: int = DEFAULT_RNN_HIDDEN_DIM
     """The dimensionality of the RNN model."""
     attention_num_heads: int = DEFAULT_ATTENTION_NUM_HEADS
-    """The number of attention heads."""
+    """The number of attention heads for the attention antibody embedding type."""
     num_epochs: Optional[int] = None
     """The number of epochs for the embedding model. If None, num_epochs is set based on model_granularity."""
     batch_size: int = DEFAULT_BATCH_SIZE

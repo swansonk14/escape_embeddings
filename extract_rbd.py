@@ -35,7 +35,7 @@ def extract_rbd(data_path: Path) -> None:
     # Join RBD
     rbd_sequence = ''.join(site_to_aa[site] for site in sites)
 
-    # Print RBD
+    # Print RBD (this is copied to constants.py)
     print(rbd_sequence)
     print(f'Length = {len(rbd_sequence)}')
     print(f'Range = {start}-{stop}')

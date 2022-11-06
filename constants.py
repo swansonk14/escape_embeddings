@@ -1,13 +1,18 @@
 """Contains constants used in the Python files in this repo."""
 from typing import Literal
 
+# Amino acid constants
 AA_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
 AA_ALPHABET_SET = set(AA_ALPHABET)
 AA_TO_INDEX = {aa: index for index, aa in enumerate(AA_ALPHABET)}
+
+# Antibody constants
 HEAVY_CHAIN = 'heavy'
 LIGHT_CHAIN = 'light'
 ANTIBODY_CHAINS = [HEAVY_CHAIN, LIGHT_CHAIN]
-PROTEIN_LINKER = 'GGS' * 7  # Linker amino acids for combining multiple proteins into a single sequence
+
+# Linker amino acids for combining multiple proteins into a single sequence
+PROTEIN_LINKER = 'GGS' * 7
 
 # Constants for data from Cao et al. https://www.nature.com/articles/s41586-021-04385-3
 ANTIBODY_COLUMN = 'condition'

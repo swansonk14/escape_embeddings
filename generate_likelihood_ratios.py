@@ -75,4 +75,5 @@ if __name__ == '__main__':
         device: str = DEFAULT_DEVICE
         """The device to use (e.g., "cpu" or "cuda") for the model."""
 
+
     generate_likelihood_ratios(**Args().parse_args().as_dict())

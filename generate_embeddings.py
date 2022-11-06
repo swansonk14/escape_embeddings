@@ -239,4 +239,5 @@ if __name__ == '__main__':
         batch_size: int = DEFAULT_BATCH_SIZE
         """The number of sequences to process at once."""
 
+
     generate_embeddings(**Args().parse_args().as_dict())
