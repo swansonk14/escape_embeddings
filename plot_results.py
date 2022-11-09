@@ -16,16 +16,36 @@ from constants import (
 
 # The list of models that will appear in the "limited" plots
 LIMITED_MODELS = [
-    'Mutation', 'Site', 'RNN Res', 'Likelihood',
-    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff', 'Antigen Res Mut',
-    'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb', 'Antigen Linker Antibody'
+    'Mutation',
+    'Site',
+    'RNN Res',
+    'Likelihood',
+    'Antigen Seq Mut',
+    'Antigen Seq Diff',
+    'Antigen Seq MutDiff',
+    'Antigen Res Mut',
+    'Antigen Res Diff',
+    'Antigen Res Mut Antibody One-Hot',
+    'Antigen Res Mut Antibody Emb',
+    'Antigen Res Mut Antibody Att',
+    'Antigen Linker Antibody'
 ]
 # The desired order of the models in the plots
 MODEL_ORDER = [
-    'Mutation', 'Site', 'RNN Seq', 'RNN Res', 'Likelihood',
-    'Antigen Seq Mut', 'Antigen Seq Diff', 'Antigen Seq MutDiff',
-    'Antigen Res Mut', 'Antigen Res Diff', 'Antigen Res MutDiff',
-    'Antigen Res Mut + Antibody OH', 'Antigen Res Mut + Antibody Emb',
+    'Mutation',
+    'Site',
+    'RNN Seq',
+    'RNN Res',
+    'Likelihood',
+    'Antigen Seq Mut',
+    'Antigen Seq Diff',
+    'Antigen Seq MutDiff',
+    'Antigen Res Mut',
+    'Antigen Res Diff',
+    'Antigen Res MutDiff',
+    'Antigen Res Mut Antibody One-Hot',
+    'Antigen Res Mut Antibody Emb',
+    'Antigen Res Mut Antibody Att',
     'Antigen Linker Antibody'
 ]
 # A dictionary mapping from model name to order index
@@ -74,17 +94,17 @@ def row_to_model_name(row: pd.Series, newlines: bool = False) -> str:
             elif row.antigen_embedding_type == 'mutant_difference':
                 model_name += ' MutDiff'
             elif row.antigen_embedding_type == 'linker':
-                model_name += ' Linker Antibody'
+                model_name += f'{whitespace}Linker{whitespace}Antibody'
             else:
                 raise ValueError(f'Antigen embedding type "{row.antigen_embedding_type}" is not supported.')
 
         if isinstance(row.antibody_embedding_type, str):
             if row.antibody_embedding_type == 'concatenation':
-                model_name += f' +{whitespace}Antibody Emb'
+                model_name += f'{whitespace}Antibody{whitespace}Emb'
             elif row.antibody_embedding_type == 'one_hot':
-                model_name += f' +{whitespace}Antibody OH'
+                model_name += f'{whitespace}Antibody{whitespace}One-Hot'
             elif row.antibody_embedding_type == 'attention':
-                model_name += f' +{whitespace}Antibody Att'
+                model_name += f'{whitespace}Antibody{whitespace}Att'
             else:
                 raise ValueError(f'Antibody embedding type "{row.antibody_embedding_type}" is not supported.')
 
@@ -158,6 +178,10 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
     # Plot results
     for task_type in get_args(TASK_TYPE_OPTIONS):
         for metric in METRICS:
+            # Skip MSE and R2 metrics for classification
+            if task_type == 'classification' and metric in {'MSE', 'R2'}:
+                continue
+
             plt.clf()
 
             all_model_names, all_mean_values, all_std_values, all_splits = [], [], [], []
@@ -232,6 +256,10 @@ def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Option
     # Plot results
     for task_type in get_args(TASK_TYPE_OPTIONS):
         for metric in METRICS:
+            # Skip MSE and R2 metrics for classification
+            if task_type == 'classification' and metric in {'MSE', 'R2'}:
+                continue
+
             for split_type in get_args(SPLIT_TYPE_OPTIONS):
                 for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
                     if model_granularity == 'per-antibody' and split_type in {'antibody', 'antibody_group'}:
