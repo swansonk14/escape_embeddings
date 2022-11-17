@@ -31,7 +31,7 @@ def visualize_escape_score_histogram(data: pd.DataFrame, save_path: Path) -> Non
     plt.title('Nonzero Escape Scores')
 
     plt.tight_layout()
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches='tight')
 
 
 def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> None:
@@ -63,7 +63,7 @@ def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> No
 
     plt.title('Escape Score per Antibody across RBD')
     plt.tight_layout()
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches='tight')
 
 
 def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data: pd.DataFrame,
@@ -115,7 +115,7 @@ def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data
     fig.colorbar(im, ax=axes.ravel().tolist())
 
     fig.suptitle('Escape Score per Antibody across RBD by Epitope Group')
-    plt.savefig(save_path, dpi=1200)
+    plt.savefig(save_path, bbox_inches='tight')
 
 
 def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -> None:
@@ -146,7 +146,38 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -
 
     plt.title('Escape Score by Amino Acid Change')
     plt.tight_layout()
-    plt.savefig(save_path)
+    plt.savefig(save_path, bbox_inches='tight')
+
+
+def visualize_escape_by_site(data: pd.DataFrame, save_path: Path) -> None:
+    """Visualize escape per antigen site.
+
+    :param data: DataFrame containing escape data.
+    :param save_path: Path to PDF/PNG file where escape score plot by antigen site will be saved.
+    """
+    # Get the average escape per antigen site
+    escape = data.groupby(SITE_COLUMN)[ESCAPE_COLUMN].mean().reset_index()
+
+    # Get the unique antigen sites
+    sites = escape[SITE_COLUMN].unique()
+
+    # Create a grid of escape scores by antigen site
+    escape_grid = escape[ESCAPE_COLUMN].to_numpy().reshape(1, len(sites)).repeat(200, axis=0)
+
+    # Plot the escape score by antigen site
+    fig, ax = plt.subplots()
+    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
+    fig.colorbar(im)
+
+    # Place x ticks at every 10th site
+    ax.set_xticks(np.arange(0, len(sites), 10), sites[::10])
+    ax.tick_params(axis='x', labelrotation=45)
+    ax.set_xlabel(SITE_COLUMN)
+    ax.set_yticks([])
+
+    plt.title('Escape Score by Antigen Site')
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches='tight')
 
 
 def visualize_escape(data_path: Path, antibody_path: Path, save_dir: Path) -> None:
@@ -186,6 +217,10 @@ def visualize_escape(data_path: Path, antibody_path: Path, save_dir: Path) -> No
     visualize_escape_by_amino_acid_change(
         data=data,
         save_path=save_dir / 'escape_by_amino_acid_change.pdf'
+    )
+    visualize_escape_by_site(
+        data=data,
+        save_path=save_dir / 'escape_by_antigen_site.pdf'
     )
 
 
