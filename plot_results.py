@@ -27,7 +27,6 @@ LIMITED_MODELS = [
     'Antigen Res Diff',
     'Antigen Res Mut Antibody One-Hot',
     'Antigen Res Mut Antibody Emb',
-    'Antigen Res Mut Antibody Att',
     'Antigen Linker Antibody'
 ]
 # The desired order of the models in the plots
