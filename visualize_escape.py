@@ -19,6 +19,10 @@ from constants import (
 )
 
 
+CBAR_FONTSIZE = 15
+DPI = 1200
+
+
 def visualize_escape_score_histogram(data: pd.DataFrame, save_path: Path) -> None:
     """Visualize escape scores as a histogram.
 
@@ -26,12 +30,12 @@ def visualize_escape_score_histogram(data: pd.DataFrame, save_path: Path) -> Non
     :param save_path: Path to PDF/PNG file where escape score histogram will be saved.
     """
     plt.hist(data[data[ESCAPE_COLUMN] != 0][ESCAPE_COLUMN], bins=100)
-    plt.xlabel('Escape Score')
-    plt.ylabel('Count')
-    plt.title('Nonzero Escape Scores')
+    plt.xlabel('Escape Score', fontsize=15)
+    plt.ylabel('Count', fontsize=15)
+    plt.title('Nonzero Escape Scores', fontsize=20)
 
     plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=DPI)
 
 
 def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> None:
@@ -53,21 +57,26 @@ def visualize_escape_by_antibody_site(data: pd.DataFrame, save_path: Path) -> No
 
     # Plot the escape score grid
     fig, ax = plt.subplots()
-    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
-    fig.colorbar(im)
+    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'), interpolation='none')
+    cbar = fig.colorbar(im)
+    cbar.set_label('Escape Score', rotation=270, fontsize=CBAR_FONTSIZE, labelpad=25)
 
+    ax.set_rasterized(True)
     ax.set_xticks(np.arange(len(sites)), RBD_SEQUENCE, fontsize=1)
-    ax.set_xlabel('RBD Sequence')
+    ax.set_xlabel('RBD Sequence', fontsize=15)
     ax.set_yticks(np.arange(len(antibodies)), antibodies, fontsize=1)
-    ax.set_ylabel('Antibody')
+    ax.set_ylabel('Antibody', fontsize=15)
 
-    plt.title('Escape Score per Antibody across RBD')
+    plt.title('Escape Score per Antibody across RBD', fontsize=15)
     plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=DPI)
 
 
-def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data: pd.DataFrame,
-                                               save_path: Path) -> None:
+def visualize_escape_by_antibody_site_by_group(
+        data: pd.DataFrame,
+        antibody_data: pd.DataFrame,
+        save_path: Path
+) -> None:
     """Visualize escape per antibody per site by antibody group.
 
     :param data: DataFrame containing escape data.
@@ -102,20 +111,23 @@ def visualize_escape_by_antibody_site_by_group(data: pd.DataFrame, antibody_data
 
         group_antibodies = antibody_data[antibody_data[EPITOPE_GROUP_COLUMN] == group][ANTIBODY_NAME_COLUMN]
         group_escape_grid = escape_data.loc[escape_data.index.isin(group_antibodies)].to_numpy()
-        im = ax.imshow(group_escape_grid, cmap=plt.get_cmap('viridis'), vmin=min_escape, vmax=max_escape)
+        im = ax.imshow(group_escape_grid, cmap=plt.get_cmap('viridis'), interpolation='none',
+                       vmin=min_escape, vmax=max_escape)
+        ax.set_rasterized(True)
 
         ax.set_xticks(np.arange(len(sites)), RBD_SEQUENCE, fontsize=1)
         if row == 2:
-            ax.set_xlabel('RBD Sequence')
+            ax.set_xlabel('RBD Sequence', fontsize=10)
         ax.set_yticks(np.arange(len(group_antibodies)), group_antibodies, fontsize=1)
         if col == 0:
-            ax.set_ylabel('Antibody')
-        ax.set_title(f'Epitope Group {group}')
+            ax.set_ylabel('Antibody', fontsize=10)
+        ax.set_title(f'Epitope Group {group}', fontsize=10)
 
-    fig.colorbar(im, ax=axes.ravel().tolist())
+    cbar = fig.colorbar(im, ax=axes.ravel().tolist())
+    cbar.set_label('Escape Score', rotation=270, fontsize=CBAR_FONTSIZE, labelpad=25)
 
-    fig.suptitle('Escape Score per Antibody across RBD by Epitope Group')
-    plt.savefig(save_path, bbox_inches='tight')
+    fig.suptitle('Escape Score per Antibody across RBD by Epitope Group', fontsize=15)
+    plt.savefig(save_path, bbox_inches='tight', dpi=DPI)
 
 
 def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -> None:
@@ -136,17 +148,19 @@ def visualize_escape_by_amino_acid_change(data: pd.DataFrame, save_path: Path) -
 
     # Plot the escape score grid
     fig, ax = plt.subplots()
-    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
-    fig.colorbar(im)
+    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'), interpolation='none')
+    cbar = fig.colorbar(im)
+    cbar.set_label('Escape Score', rotation=270, fontsize=CBAR_FONTSIZE, labelpad=25)
 
+    ax.set_rasterized(True)
     ax.set_xticks(np.arange(len(mutation)), mutation)
-    ax.set_xlabel(MUTANT_COLUMN)
+    ax.set_xlabel('Mutant', fontsize=15)
     ax.set_yticks(np.arange(len(wildtype)), wildtype)
-    ax.set_ylabel(WILDTYPE_COLUMN)
+    ax.set_ylabel('Wildtype', fontsize=15)
 
-    plt.title('Escape Score by Amino Acid Change')
+    plt.title('Mutation Model', fontsize=20)
     plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=DPI)
 
 
 def visualize_escape_by_site(data: pd.DataFrame, save_path: Path) -> None:
@@ -166,18 +180,20 @@ def visualize_escape_by_site(data: pd.DataFrame, save_path: Path) -> None:
 
     # Plot the escape score by antigen site
     fig, ax = plt.subplots()
-    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'))
-    fig.colorbar(im)
+    im = ax.imshow(escape_grid, cmap=plt.get_cmap('viridis'), interpolation='none')
+    cbar = fig.colorbar(im)
+    cbar.set_label('Escape Score', rotation=270, fontsize=CBAR_FONTSIZE, labelpad=25)
 
     # Place x ticks at every 10th site
+    ax.set_rasterized(True)
     ax.set_xticks(np.arange(0, len(sites), 10), sites[::10])
     ax.tick_params(axis='x', labelrotation=45)
-    ax.set_xlabel(SITE_COLUMN)
+    ax.set_xlabel('Site', fontsize=15)
     ax.set_yticks([])
 
-    plt.title('Escape Score by Antigen Site')
+    plt.title('Site Model', fontsize=20)
     plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=DPI)
 
 
 def visualize_escape(data_path: Path, antibody_path: Path, save_dir: Path) -> None:
