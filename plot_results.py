@@ -182,6 +182,9 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
             if task_type == 'classification' and metric in {'MSE', 'R2'}:
                 continue
 
+            # Update metric for R2
+            metric_to_plot = '$R^2$' if metric == 'R2' else metric
+
             plt.clf()
 
             all_model_names, all_mean_values, all_std_values, all_splits = [], [], [], []
@@ -232,8 +235,8 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
                         error_kw=dict(lw=1, capsize=2, capthick=1))
 
             plt.xticks(np.arange(num_splits), all_splits, fontsize=6)
-            plt.ylabel(metric)
-            plt.title(f'{task_type.title()} {metric}')
+            plt.ylabel(metric_to_plot, fontsize=12)
+            plt.title(f'{task_type.title()} {metric_to_plot}', fontsize=15)
             plt.legend(fontsize=6)
 
             # Save plot
@@ -243,7 +246,7 @@ def plot_results_cross_split(results: pd.DataFrame, save_dir: Path, models: Opti
             plt.savefig(experiment_save_path, bbox_inches='tight')
 
 
-def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
+def plot_results_by_split(results: pd.DataFrame, save_dir: Path, models: Optional[list[str]] = None) -> None:
     """Plot the results of multiple experiments with a separate plot for each split type.
 
     :param results: A DataFrame containing all the experiment results.
@@ -259,6 +262,9 @@ def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Option
             # Skip MSE and R2 metrics for classification
             if task_type == 'classification' and metric in {'MSE', 'R2'}:
                 continue
+
+            # Update metric for R2
+            metric_to_plot = '$R^2$' if metric == 'R2' else metric
 
             for split_type in get_args(SPLIT_TYPE_OPTIONS):
                 for model_granularity in get_args(MODEL_GRANULARITY_OPTIONS):
@@ -279,10 +285,10 @@ def plot_results_per_split(results: pd.DataFrame, save_dir: Path, models: Option
                     # Plot results
                     plt.clf()
                     plt.bar(model_names, mean_values, alpha=0.5, yerr=std_values, capsize=5)
-                    plt.xticks(fontsize=5)
-                    plt.ylabel(metric)
+                    plt.xticks(fontsize=4.25 if models is None else 5)
+                    plt.ylabel(metric_to_plot, fontsize=12)
                     plt.title(f'{split_type.replace("_", " ").title()} Split {model_granularity.title()} '
-                              f'{task_type.title()} {metric}')
+                              f'{task_type.title()} {metric_to_plot}', fontsize=12)
 
                     # Save plot
                     experiment_save_path = save_dir / split_type / model_granularity / task_type / \
@@ -315,13 +321,13 @@ def plot_results(results_path: Path, save_dir: Path) -> None:
     )
 
     # Plot results by split
-    plot_results_per_split(
+    plot_results_by_split(
         results=results,
         save_dir=save_dir / 'by_split'
     )
 
     # Plot results by split with limited models
-    plot_results_per_split(
+    plot_results_by_split(
         results=results,
         save_dir=save_dir / 'by_split_limited',
         models=LIMITED_MODELS
