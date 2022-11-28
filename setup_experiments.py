@@ -1,6 +1,6 @@
 """Sets up all experiments for predicting escape with different data, models, and settings."""
 from pathlib import Path
-from typing import get_args, Optional
+from typing import Literal, get_args, Optional
 
 from tap import Tap
 
@@ -24,8 +24,9 @@ def setup_experiments(
         antibody_antigen_embeddings_path: str,
         experiment_save_dir: Path,
         bash_save_path: Path,
-        device: Optional[str] = None,
-        skip_existing: bool = False
+        skip_existing: bool = False,
+        save_only_device: Optional[str] = None,
+        start_index: int = 0
 ) -> None:
     """Sets up all experiments for predicting escape with different data, models, and settings.
 
@@ -37,8 +38,9 @@ def setup_experiments(
     :param antibody_antigen_embeddings_path: Path to PT file containing a dictionary mapping from antibody name_chain and antigen name to ESM2 embedding.
     :param experiment_save_dir: Path to directory where all the experiment results will be saved.
     :param bash_save_path: Path to bash file where experiment commands will be saved.
-    :param device: The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models.
     :param skip_existing: Whether to skip running the code if the save_dir already exists.
+    :param save_only_device: Whether to only save experiments that are run on a certain device (e.g., CPU or GPU).
+    :param start_index: Starting index of the experiments to run.
     """
     # Set up experiment args
     all_experiments_args = []
@@ -70,6 +72,7 @@ def setup_experiments(
                         for antigen_embedding_granularity in get_args(EMBEDDING_GRANULARITY_OPTIONS):
                             experiments_args.append(experiment_args | {
                                 'antigen_embedding_granularity': antigen_embedding_granularity,
+                                'device': 'cuda'
                             })
                     elif model_type == 'embedding':
                         antigen_experiment_args = []
@@ -104,14 +107,17 @@ def setup_experiments(
                                             and antibody_embedding_granularity != 'sequence':
                                         continue
 
-                                    if antibody_embedding_type == 'attention':
+                                    if antibody_embedding_type == 'attention' and (
+                                            task_type != 'classification' or antibody_embedding_granularity != 'residue'
+                                    ):
                                         continue
 
                                     antibody_experiments_args.append(experiment_args | {
                                         'antibody_embedding_type': antibody_embedding_type
                                     } | ({'antibody_embeddings_path': antibody_embeddings_path,
-                                          'antibody_embedding_granularity': antibody_embedding_granularity,}
+                                          'antibody_embedding_granularity': antibody_embedding_granularity}
                                          if antibody_embedding_type != 'one_hot' else {})
+                                      | ({'device': 'cuda'} if antibody_embedding_type == 'attention' else {})
                                     )
 
                         experiments_args = antigen_experiment_args + antibody_experiments_args
@@ -120,9 +126,13 @@ def setup_experiments(
 
                     all_experiments_args += experiments_args
 
+    # Optionally filter out experiments with wrong device
+    if save_only_device is not None:
+        all_experiments_args = [args for args in all_experiments_args if args.get('device', 'cpu') == save_only_device]
+
     # Add save directory
     for i, experiment_args in enumerate(all_experiments_args):
-        experiment_args['save_dir'] = str(experiment_save_dir / str(i))
+        experiment_args['save_dir'] = str(experiment_save_dir / str(i + start_index))
 
     print(f'Number of experiments = {len(all_experiments_args):,}')
 
@@ -140,9 +150,6 @@ def setup_experiments(
                 f.write(f'    --{keys[i]} {args[keys[i]]} \\\n')
 
             f.write(f'    --{keys[-1]} {args[keys[-1]]}')
-
-            if device is not None:
-                f.write(f' \\\n    --device {device}')
 
             if skip_existing:
                 f.write(' \\\n    --skip_existing')
@@ -168,10 +175,12 @@ if __name__ == '__main__':
         """Path to directory where all the experiment results will be saved."""
         bash_save_path: Path
         """Path to bash file where experiment commands will be saved."""
-        device: Optional[str] = None
-        """The device to use (e.g., "cpu" or "cuda") for the RNN and embedding models."""
         skip_existing: bool = False
         """Whether to skip running the code if the save_dir already exists."""
+        save_only_device: Optional[Literal['cpu', 'cuda']] = None
+        """Whether to only save experiments that are run on a certain device (e.g., CPU or GPU)."""
+        start_index: int = 0
+        """Starting index of the experiments to run."""
 
 
     setup_experiments(**Args().parse_args().as_dict())

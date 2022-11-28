@@ -110,7 +110,7 @@ python generate_likelihood_ratios.py \
 
 ## Set Up Experiments
 
-Set up a bash script with all the experiments to run.
+Set up bash scripts with the experiments to run. One script will contain CPU models while the other will contain GPU models.
 
 ```bash
 python setup_experiments.py \
@@ -121,21 +121,34 @@ python setup_experiments.py \
     --antibody_embeddings_path embeddings/antibody_embeddings.pt \
     --antibody_antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
     --experiment_save_dir results \
-    --bash_save_path run_experiments.sh \
-    --skip_existing
+    --bash_save_path run_experiments_cpu.sh \
+    --skip_existing \
+    --save_only_device cpu
 ```
 
-Note: The RNN experiments were manually extracted and put in `run_experiments_rnn.sh` while all other experiments remain in `run_experiments.sh`. This is because the RNN experiments require a GPU while the other experiments do not.
+This will generate 138 experiments.
+
+```bash
+python setup_experiments.py \
+    --data_path data/data.csv \
+    --antibody_path data/antibodies.csv \
+    --antigen_likelihoods_path embeddings/antigen_likelihood_ratios.pt \
+    --antigen_embeddings_path embeddings/antigen_embeddings.pt \
+    --antibody_embeddings_path embeddings/antibody_embeddings.pt \
+    --antibody_antigen_embeddings_path embeddings/antibody_antigen_embeddings.pt \
+    --experiment_save_dir results \
+    --bash_save_path run_experiments_gpu.sh \
+    --skip_existing \
+    --save_only_device cuda \
+    --start_index 138
+```
+
+This will generate 30 more experiments for 168 total.
+
 
 ## Run Experiments
 
-Run the experiments. `run_experiments.sh` is CPU only, while `run_experiments_rnn.sh` requires a GPU.
-
-```bash
-bash run_experiments.sh
-bash run_experiments_rnn.sh
-```
-
+Run the experiments. Run `bash run_experiments_cpu.sh` on a device with CPUs and `bash run_experiments_gpu.sh` on a device with GPUs.
 
 ## Combine Results
 
