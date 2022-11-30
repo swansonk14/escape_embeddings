@@ -19,6 +19,8 @@ Activate the conda environment.
 conda activate escape_embeddings
 ```
 
+Note: If there are any package version issues when installing the environment or running the code, the precise set of package versions used to run this code is in `environment_frozen.yml`.
+
 
 ## Data
 
