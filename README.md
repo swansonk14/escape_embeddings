@@ -1,10 +1,11 @@
 # Escape Embeddings
 
-This repo contains code for modeling SARS-CoV-2 antigen escape from antibodies using pretrained protein language model embeddings.
+This repo contains code for modeling SARS-CoV-2 immune escape using pretrained protein language model embeddings. The models in this repo learn to predict how antibody binding to a SARS-CoV-2 antigen is affected by single point mutations to the antigen.
 
 All data, embeddings, and results are available in this Google Drive folder: https://drive.google.com/drive/folders/18heVMWK46ExHkSeixyrNiJLovnIbZ4jg?usp=share_link
 
 [//]: # (TODO: add link to arxiv paper)
+
 
 ## Installation
 
@@ -21,7 +22,7 @@ conda activate escape_embeddings
 
 ## Data
 
-Download single amino acid mutation data for SARS-CoV-2 receptor binding domain (RBD) from here: https://github.com/jbloomlab/SARS2_RBD_Ab_escape_maps/tree/main/data/2022_Cao_Omicron
+Download single amino acid mutation data for the SARS-CoV-2 receptor binding domain (RBD) from here: https://github.com/jbloomlab/SARS2_RBD_Ab_escape_maps/tree/main/data/2022_Cao_Omicron
 
 Source: Cao et al., Omicron escapes the majority of existing SARS-CoV-2 neutralizing antibodies, Nature, 2022. https://www.nature.com/articles/s41586-021-04385-3
 
@@ -55,7 +56,7 @@ python visualize_escape.py \
 
 ## ESM2 Protein Language Model
 
-Use an ESM2 protein language model to embed antigens and antibodies and to compute mutant likelihood ratios. See ESM2 model options at https://github.com/facebookresearch/esm.
+Use an ESM2 protein language model to embed antigens and antibodies and to compute mutation likelihood ratios. See ESM2 model options at https://github.com/facebookresearch/esm.
 
 
 ### Generate ESM2 Embeddings
@@ -148,7 +149,7 @@ This will generate 30 more experiments for 168 total.
 
 ## Run Experiments
 
-Run the experiments. Run `bash run_experiments_cpu.sh` on a device with CPUs and `bash run_experiments_gpu.sh` on a device with GPUs.
+Run the experiments. Run `bash run_experiments_cpu.sh` on a device with CPUs and `bash run_experiments_gpu.sh` on a device with a GPU.
 
 ## Combine Results
 
