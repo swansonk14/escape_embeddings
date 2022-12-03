@@ -1,10 +1,10 @@
 # Escape Embeddings
 
-This repo contains code for modeling SARS-CoV-2 immune escape using pretrained protein language model embeddings. The models in this repo learn to predict how antibody binding to a SARS-CoV-2 antigen is affected by single point mutations to the antigen.
+This repo contains code for the paper [Predicting Immune Escape with Pretrained Protein Language Model Embeddings](https://www.biorxiv.org/content/10.1101/2022.11.30.518466v1).
+
+The models in this repo use pretrained protein language model embeddings to predict how antibody binding to a SARS-CoV-2 antigen is affected by single point mutations to the antigen.
 
 All data, embeddings, and results are available in this Google Drive folder: https://drive.google.com/drive/folders/18heVMWK46ExHkSeixyrNiJLovnIbZ4jg?usp=share_link
-
-[//]: # (TODO: add link to arxiv paper)
 
 
 ## Installation
