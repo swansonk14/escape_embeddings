@@ -13,7 +13,7 @@ class MLP(nn.Module):
         """Initialize the model.
 
         :param input_dim: The dimensionality of the input to the model.
-        :param output_dim: The dimensionality of the input to the model.
+        :param output_dim: The dimensionality of the output of the model.
         :param hidden_layer_dims: The dimensionalities of the hidden layers.
         """
         super(MLP, self).__init__()
